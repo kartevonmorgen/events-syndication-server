@@ -61,7 +61,7 @@ if ( !defined( 'EVENTS_SS_VERSION'       ) )
 }
 
 $instance = EventsSyndicationServer::get_instance();
-add_action( 'plugins_loaded', array( $instance, 'start' ) );
+add_action( 'init', array( $instance, 'start' ) );
 
 require_once( EVENTS_SS_DIR . "/inc/models/class-ss-database.php" );
 require_once( EVENTS_SS_DIR . "/inc/controllers/class-ss-io.php" );
