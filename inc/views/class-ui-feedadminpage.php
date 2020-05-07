@@ -17,6 +17,12 @@ final class UIFeedAdminPage extends UIPage
     $this->_feedadmincontrol = $feedadmincontrol;
   }
 
+  public function get_capability()
+  {
+    // can be shown for every user
+    return 'manage_event_feeds';
+  }
+
   public function admin_init()
   {
   }
@@ -61,9 +67,9 @@ final class UIFeedAdminPage extends UIPage
 
     ?><div id="add_feed_form" class="highlight" style="display:block;">
 			<?php $this->get_explain_block(
-				"This section control the feeds aggregated to your websites.". 
+				"This section control the feeds imported to this websites.". 
 				"<br/>".
-				"<b>Import an feed to get the events, coming from another website, presented and updated in your website.</b>"
+				"<b>Import an feed to get the events, coming from another website, presented and updated in this website.</b>"
 				//"You can specify if the events aggregated have to be updated daily (to always have the latest information coming from the original websites)."
 			);?>
 			<div id="titlediv">
@@ -102,7 +108,18 @@ final class UIFeedAdminPage extends UIPage
 		$view = strtolower( ( isset( $_GET['view'] ) )? $_GET['view'] : 'all' );
 		$active_count = $db->count(array('feed_status'=>SSDatabase::FEED_STATUS_ACTIVE));
 		$trash_count = $db->count(array('feed_status'=>SSDatabase::FEED_STATUS_DELETED));
-		$efi = $db->get(array('feed_status'=>( ( $view == 'trash' )? SSDatabase::FEED_STATUS_DELETED : SSDatabase::FEED_STATUS_ACTIVE )));
+		
+    $efi_query = array();
+    $efi_query['feed_status'] = ( $view == 'trash' ) ? 
+      SSDatabase::FEED_STATUS_DELETED : SSDatabase::FEED_STATUS_ACTIVE ;
+    
+    $current_user = wp_get_current_user();
+    if( !user_can( $current_user, 'manage_other_event_feeds' ))
+    {
+      $efi_query['feed_owner'] = $current_user->ID;
+    }
+
+    $efi = $db->get( $efi_query );
 
 		$url_all_events 	= em_add_get_params( $_SERVER['REQUEST_URI'], array('view'=>'all'   ) )."#import";
 		$url_trash_events 	= em_add_get_params( $_SERVER['REQUEST_URI'], array('view'=>'trash' ) )."#import";
@@ -176,8 +193,8 @@ final class UIFeedAdminPage extends UIPage
           {
             foreach ( $efi as $feed )
             {
-              $user = get_userdata( $feed->feed_owner );
-              $owner = ((isset($user))?$user->data->display_name:'');
+              $user = get_user_by( 'id', $feed->feed_owner );
+              $owner = ((isset($user))?$user->user_login:'');
               $event_ids = explode(',', $feed->feed_event_ids );
               $class = ($rowno % 2) ? 'alternate' : '';
               $rowno++;

@@ -33,9 +33,9 @@ abstract class SSAbstractImport
 
   }
 
-  abstract function is_feed_valid();
+  public abstract function is_feed_valid();
 
-  abstract function read_feed_uuid();
+  public abstract function read_feed_uuid();
 
   abstract function read_feed_title();
 
@@ -117,7 +117,7 @@ abstract class SSAbstractImport
   {
     $db = SSDatabase::get_instance();
 
-    $feeds = $db->get( array('feed_uuid'=>$feed_uuid));
+    $feeds = $db->get(array('feed_uuid'=>$feed_uuid));
     if(empty($feeds))
     {
       return null;
@@ -150,10 +150,16 @@ abstract class SSAbstractImport
     }
     $db = SSDatabase::get_instance();
 
+    $user_owner_id = $this->get_owner_user_id();
+    if($user_owner_id === 0)
+    {
+      $user_owner_id = get_current_user_id();
+    }
+
     $success = $db->add( array(
       'feed_id' => $feed_id,
       'feed_uuid'	=> $this->get_feed_uuid(),
-      'feed_owner' => intval( $this->get_owner_user_id() ),
+      'feed_owner' => intval( $user_owner_id ),
       'feed_event_ids' 	=> implode(',',$updated_event_ids ),
       'feed_title'		=> $this->get_feed_title(), 
       'feed_host'			=> $dom_[ 'host' ],

@@ -10,6 +10,7 @@
   */
 class SSESSImport extends SSAbstractImport
 {
+  private $_isFeedValid = FALSE;
 	/**
 	 * Simple test to check if the URL targets to an existing file.
 	 *
@@ -18,6 +19,11 @@ class SSESSImport extends SSAbstractImport
 	 */
 	public function is_feed_valid()
 	{
+    if($this->_isFeedValid)
+    {
+      return TRUE;
+    }
+
     $feed_url = $this->get_feed_url();
 
     $instance = SSFeedAdminControl::get_instance(); 
@@ -60,9 +66,10 @@ class SSESSImport extends SSAbstractImport
 
 						$this->set_error( $response );
 
-						return FALSE;
+            return FALSE;
 					}
 				}
+        $this->_isFeedValid = TRUE;
 				return TRUE;
 			}
 		}

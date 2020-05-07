@@ -31,8 +31,8 @@ class SSFeedAdminControl
   public function start() 
   {
     $page = new UIFeedAdminPage('events-syndication-server-feeds', 
-                                'Syndication Server Feeds');
-    $page->set_submenu_page(true, 'events-interface-options-menu');
+                                'Events Feeds');
+    //$page->set_submenu_page(true, 'events-interface-options-menu');
     $page->set_feedadmincontrol($this);
     $page->register();
   }
@@ -43,11 +43,13 @@ class SSFeedAdminControl
 
     if( $selected_feed_id > 0)
     {
+      // It is a new feed
       $feed_url = (isset($_REQUEST[ 'update_once' ]	)) ? 
         urldecode( @$_REQUEST[ 'update_once' ] ) : '';
     }
     else
     {
+      // Feed exists already
       $feed_url = ( isset( $_REQUEST[ 'feed_url' ] )) ? 
         urldecode( @$_REQUEST[ 'feed_url' ] ) : '';
     }
@@ -68,6 +70,20 @@ class SSFeedAdminControl
     }
 
     $notices = SSNotices::get_instance();
+    $db = SSDatabase::get_instance();
+    $feeds = $db->get( array('feed_url'=> $feed_url));
+    if( (!($selected_feed_id > 0)) && !empty($feeds))
+    {
+      $stored_feed = reset( $feeds );
+      $notices->add_error( __( 
+        "Feed URL exist already for User-ID (".
+        $stored_feed->feed_owner. '), can also be in Trash ', 
+        'events-ss' ). 
+        $feed_url );
+      return;
+    }
+
+
     $instance = SSImporterFactory::get_instance();
     $importer = $instance->create_importer($feed_url);
     if(empty($importer))
@@ -75,6 +91,28 @@ class SSFeedAdminControl
       //echo 'No Importer instance found for feed url' . $feed_url;
       $notices->add_error( __( 
         "No importer found for import url ", 'events-ss' ). 
+        $feed_url );
+      return;
+    }
+
+    
+		if ( ! $importer->is_feed_valid() )
+    {
+      $notices->add_error( __( 
+        'ERROR: '.$importer->get_error() . ' ', 'events-ss' ). 
+        $feed_url );
+      return;
+    }
+
+    $feed_uuid = $importer->read_feed_uuid();
+    $feeds = $db->get( array('feed_uuid'=> $feed_uuid));
+    if( (!($selected_feed_id > 0)) && !empty($feeds))
+    {
+      $stored_feed = reset( $feeds );
+      $notices->add_error( __( 
+        "Feed UUID exist already for User-ID (".
+        $stored_feed->feed_owner. '), can also be in Trash ', 
+        'events-ss' ). 
         $feed_url );
       return;
     }

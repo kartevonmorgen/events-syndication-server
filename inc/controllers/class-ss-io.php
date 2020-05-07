@@ -61,6 +61,14 @@ final class SS_IO
     $db = SSDatabase::get_instance();
     $db->createTable();
 
+    $role = get_role( 'administrator' );
+    $role->add_cap( 'manage_event_feeds');
+    $role->add_cap( 'manage_other_event_feeds');
+    $role = get_role( 'editor' );
+    $role->add_cap( 'manage_event_feeds');
+    $role = get_role( 'author' );
+    $role->add_cap( 'manage_event_feeds');
+
     // -- Set Schedule Hook (CRON tasks)
     if (!wp_next_scheduled ( SS_IO::CRON_EVENT_HOOK )) 
     {
