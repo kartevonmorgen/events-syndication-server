@@ -282,6 +282,9 @@ class SSESSImport extends SSAbstractImport
     {
       return;
     }
+
+    $eiEventLocation = new EICalendarEventLocation('empty');
+    
     foreach ( $feedChild->children() as $cItem )
     {
       $eiStartDate = null;
@@ -290,30 +293,31 @@ class SSESSImport extends SSAbstractImport
       {
         $cItemChildName = strtolower($cItemChild->getName());
         $value = trim( $cItemChild );
-
+        
         switch ($cItemChildName) 
         {
            case "name":
-             $eiEvent->set_location_name( $value );
+             $eiEventLocation->set_name( $value );
              break;
            case "address":
-             $eiEvent->set_location_address( $value );
+             $eiEventLocation->set_address( $value );
              break;
            case "zip":
-             $eiEvent->set_location_zip( $value );
+             $eiEventLocation->set_zip( $value );
              break;
            case "city":
-             $eiEvent->set_location_city( $value );
+             $eiEventLocation->set_city( $value );
              break;
            case "state":
-             $eiEvent->set_location_state( $value );
+             $eiEventLocation->set_state( $value );
              break;
            case "country_code":
-             $eiEvent->set_location_country( $value );
+             $eiEventLocation->set_country( $value );
              break;
         }
       }
     }
+    $eiEvent->set_location($eiEventLocation);
   }
               
 }

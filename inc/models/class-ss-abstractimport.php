@@ -182,24 +182,6 @@ abstract class SSAbstractImport
       return $this->_raw_data;
     }
 
-    /*
-		@assert_options( ASSERT_ACTIVE, 	1 );
-		@assert_options( ASSERT_BAIL, 		1 );
-		@assert_options( ASSERT_QUIET_EVAL, 1 );
-
-    try
-    {
-      $ch = curl_init($this->get_feed_url());
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-      $this->_raw_data = curl_exec($ch);
-      curl_close($ch);
-    }
-    catch( ErrorException $e )
-    {
-      $this->set_error("GetRawData Error: An error occure while trying to read the ESS file from the URL: (" .$e. ")");
-    }
-    */
-    
     $req = new SimpleRequest('get', $this->get_feed_url());
     $client = new WordpressHttpClient();
     $resp = $client->send($req);
