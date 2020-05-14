@@ -312,7 +312,7 @@ class SSESSImport extends SSAbstractImport
              $eiEventLocation->set_state( $value );
              break;
            case "country_code":
-             $eiEventLocation->set_country( $value );
+             $eiEventLocation->set_country_code( $value );
              break;
         }
       }
