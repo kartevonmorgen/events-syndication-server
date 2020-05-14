@@ -111,6 +111,25 @@ abstract class SSAbstractImport
     }
 
     $this->save_stored_feed($stored_feed, $updated_event_ids);
+
+    // If the feed exists already, we check if some events are 
+    // no longer in the feed, if so, we delete these events.
+    if(!empty( $stored_feed))
+    {
+      $last_event_ids = explode(',',$stored_feed->feed_event_ids);
+    }
+
+    foreach($last_event_ids as $last_event_id)
+    {
+      if(in_array($last_event_id, $updated_event_ids))
+      {
+        continue;
+      }
+
+      $eiInterface = EIInterface::get_instance();
+      $eiInterface->delete_event_by_event_id($last_event_id);
+    }
+
   }
           
   private function get_stored_feed($feed_uuid)
