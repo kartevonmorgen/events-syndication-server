@@ -119,6 +119,11 @@ abstract class SSAbstractImport
       $last_event_ids = explode(',',$stored_feed->feed_event_ids);
     }
 
+    if(empty($last_event_ids))
+    {
+      return;
+    }
+
     foreach($last_event_ids as $last_event_id)
     {
       if(in_array($last_event_id, $updated_event_ids))
