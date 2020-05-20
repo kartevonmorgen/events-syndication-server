@@ -211,7 +211,9 @@ abstract class SSAbstractImport
     $feed_url = $this->get_feed_url();
 
     $feed_host = parse_url($feed_url, PHP_URL_HOST);
+    $feed_host = str_replace('www.', '', $feed_host);
     $eiEvent_host = parse_url($eiEvent->get_link(), PHP_URL_HOST);
+    $eiEvent_host = str_replace('www.', '', $eiEvent_host);
     return $feed_host == $eiEvent_host;
   }
 
