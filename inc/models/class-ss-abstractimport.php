@@ -85,6 +85,13 @@ abstract class SSAbstractImport
 
     foreach ( $eiEvents as $eiEvent )
     {
+      // Checks if the feed_url has the same host
+      // as the events url/link
+      if( !$this->is_linkurl_valid( $eiEvent ))
+      {
+        continue;
+      }
+
       $eiEvent->set_owner_user_id($this->get_owner_user_id());
       if ( $eiEvent->get_owner_user_id() === 0 )
       {
@@ -198,6 +205,15 @@ abstract class SSAbstractImport
         $this->get_feed_url() );
     }
 	}
+
+  private function is_linkurl_valid($eiEvent)
+  {
+    $feed_url = $this->get_feed_url();
+
+    $feed_host = parse_url($feed_url, PHP_URL_HOST);
+    $eiEvent_host = parse_url($eiEvent->get_link(), PHP_URL_HOST);
+    return $feed_host == $eiEvent_host;
+  }
 
   public function get_raw_data()
   {
