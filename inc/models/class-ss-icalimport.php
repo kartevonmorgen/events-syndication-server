@@ -260,7 +260,7 @@ class VEvent
         break;
       case 'LOCATION':
         $wpLocH = new WPLocationHelper();
-        $loc = wpLocH->create_from_free_text_format($value);
+        $loc = $wpLocH->create_from_free_text_format($value);
         if($wpLocH->is_valid($loc))
         {
           $eiEvent->set_location($loc);
