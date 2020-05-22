@@ -36,6 +36,12 @@ final class SSImporterFactory
     {
       return new SSESSImport($feed_url);
     }
+
+    $contains = 'ical=1';
+    if( strpos($feed_url, $contains) !== FALSE)
+    {
+      return new SSICalImport($feed_url);
+    }
     return null;
   }
 

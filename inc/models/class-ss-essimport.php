@@ -283,7 +283,8 @@ class SSESSImport extends SSAbstractImport
       return;
     }
 
-    $eiEventLocation = new EICalendarEventLocation('empty');
+    $wpLocH = new WPLocationHelper();
+    $eiEventLocation = new WPLocation();
     
     foreach ( $feedChild->children() as $cItem )
     {
@@ -297,22 +298,22 @@ class SSESSImport extends SSAbstractImport
         switch ($cItemChildName) 
         {
            case "name":
-             $eiEventLocation->set_name( $value );
+             $wpLocH->set_name( $eiEventLocation, $value );
              break;
            case "address":
-             $eiEventLocation->set_address( $value );
+             $wpLocH->set_address( $eiEventLocation, $value );
              break;
            case "zip":
-             $eiEventLocation->set_zip( $value );
+             $wpLocH->set_zip( $eiEventLocation, $value );
              break;
            case "city":
-             $eiEventLocation->set_city( $value );
+             $wpLocH->set_city( $eiEventLocation, $value );
              break;
            case "state":
-             $eiEventLocation->set_state( $value );
+             $wpLocH->set_state( $eiEventLocation, $value );
              break;
            case "country_code":
-             $eiEventLocation->set_country_code( $value );
+             $wpLocH->set_country_code($eiEventLocation,$value);
              break;
         }
       }

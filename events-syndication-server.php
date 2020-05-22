@@ -112,6 +112,7 @@ final class EventsSyndicationServer
     include_once( $dir . 'inc/models/class-ss-notices.php' 	);
     include_once( $dir . 'inc/models/class-ss-abstractimport.php');
     include_once( $dir . 'inc/models/class-ss-essimport.php');
+    include_once( $dir . 'inc/models/class-ss-icalimport.php');
     include_once( $dir . 'inc/models/class-ss-importerfactory.php');
 
     // -- VIEWS

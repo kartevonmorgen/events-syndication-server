@@ -19,6 +19,7 @@ abstract class SSAbstractImport
   private $_error;
 
   private $_raw_data;
+  private $_lines_data;
   private $_xml_data;
 
 	function __construct($feed_url)
@@ -239,6 +240,17 @@ abstract class SSAbstractImport
     }
 
     return $this->_raw_data;
+  }
+
+  public function get_lines_data()
+  {
+    if( !empty( $this->_lines_data ))
+    {
+      return $this->_lines_data;
+    }
+
+    $this->_lines_data = explode(PHP_EOL, $this->get_raw_data());
+    return $this->_lines_data;
   }
 
 
