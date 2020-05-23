@@ -82,15 +82,28 @@ abstract class SSAbstractImport
       return;
     }
 
-    $stored_feed = $this->get_stored_feed($this->get_feed_uuid());
+    $stored_feed = $this->get_stored_feed(
+                               $this->get_feed_uuid());
 
+    $now = time();
     foreach ( $eiEvents as $eiEvent )
     {
+      // Do not import events from the past
+      if(strtotime($eiEvent->get_start_date()) < $now)
+      {
+        continue;
+      }
+
       // Checks if the feed_url has the same host
       // as the events url/link
       if( !$this->is_linkurl_valid( $eiEvent ))
       {
         continue;
+      }
+
+      if( $this->is_backlink_enabled())
+      {
+        $this->add_backlink($eiEvent);
       }
 
       $eiEvent->set_owner_user_id($this->get_owner_user_id());
@@ -318,6 +331,23 @@ abstract class SSAbstractImport
   public function get_feed_title()
   {
     return $this->_feed_title;
+  }
+  
+  public function is_backlink_enabled()
+  {
+    return get_option('ss_backlink_enabled', false);
+  }
+  
+  public function add_backlink($eiEvent)
+  {
+    $backlink_html = '<p>Importiert von ';
+    $backlink_html .= '<a href="';
+    $backlink_html .= $eiEvent->get_link();
+    $backlink_html .= '">';
+    $backlink_html .= $eiEvent->get_link();
+    $backlink_html .= '</a></p>';
+    $eiEvent->set_description(
+      $eiEvent->get_description() . $backlink_html);
   }
 
   public function set_error($error)
