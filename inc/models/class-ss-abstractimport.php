@@ -76,12 +76,6 @@ abstract class SSAbstractImport
       return;
     }
 
-    if( empty($eiEvents) )
-    {
-      // This is not an Error and can sometimes happen.
-      return;
-    }
-
     $stored_feed = $this->get_stored_feed(
                                $this->get_feed_uuid());
 
@@ -183,11 +177,6 @@ abstract class SSAbstractImport
   {
     $feed_id = 0;
 
-    if ( empty( $updated_event_ids ))
-    {
-      return;
-    }
-    
     $dom_ = parse_url( $this->get_feed_url() );
     if(!empty($stored_feed))
     {
