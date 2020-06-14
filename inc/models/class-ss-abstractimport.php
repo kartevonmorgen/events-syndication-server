@@ -78,7 +78,7 @@ abstract class SSAbstractImport
 
     if( empty($eiEvents) )
     {
-      $this->set_error( "No events found in the ESS Feed:");
+      // This is not an Error and can sometimes happen.
       return;
     }
 
