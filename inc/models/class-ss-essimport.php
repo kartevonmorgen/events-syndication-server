@@ -200,7 +200,7 @@ class SSESSImport extends SSAbstractImport
               as $tag )
     {
       $tagValue = trim( $tag );
-      $eiEvent->add_tag( new EICalendarEventTag($tagValue));
+      $eiEvent->add_tag( new WPTag($tagValue));
     }
   }
 
@@ -233,8 +233,8 @@ class SSESSImport extends SSAbstractImport
               
       if(!empty($eiCatName))
       {
-        $eiCat = new EICalendarEventCategory( $eiCatName,
-                                              $eiCatSlug);
+        $eiCat = new WPCategory( $eiCatName,
+                                 $eiCatSlug);
         $eiEvent->add_category( $eiCat );
       }
     }
