@@ -170,6 +170,7 @@ final class UIFeedAdminPage extends UIPage
             <th width="100"><?php _e('Last Update', 'events-ss') ?></th>
             <th width="100"><?php _e('Next Update', 'events-ss') ?></th>
             <th width="45"><?php  _e('Update', 		'events-ss') ?></th>
+            <th width="50"><?php  _e('Type',		'events-ss') ?></th>
             <th width="50"><?php  _e('View',		'events-ss') ?></th>
           </tr>
         </thead>
@@ -184,6 +185,7 @@ final class UIFeedAdminPage extends UIPage
             <th><?php _e('Last Update', 'events-ss') ?></th>
             <th><?php _e('Next Update', 'events-ss') ?></th>
             <th><?php _e('Update', 'events-ss') ?></th>
+            <th><?php _e('Type', 'events-ss') ?></th>
             <th><?php _e('View', 'events-ss') ?></th>
           </tr>
         </tfoot>
@@ -235,6 +237,9 @@ final class UIFeedAdminPage extends UIPage
               </td>
               <td>
                 <button title="<?php _e( "Reimport the feed to update the event.", 'events-ss' );?>" onmousedown="admin.set_event_id('<?php echo $feed->feed_id; ?>');" class="button-primary reload_box" name="update_once" value="<?php echo urlencode( $feed->feed_url );?>" style="background-image:url('<?php echo EVENTS_SS_URL;?>/assets/img/reload_icon_24x24.png');background-position:7px 2px;background-repeat:no-repeat;"></button>
+              </td>
+              <td>
+                <span><?php echo $feed->feed_type ?></span>
               </td>
               <td>
                 <a href="<?php echo $feed->feed_url; ?>" target="_blank" title="<?php _e( "Download the Feed.",'events-ss'); ?>">

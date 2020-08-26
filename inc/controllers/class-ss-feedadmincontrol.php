@@ -72,20 +72,44 @@ class SSFeedAdminControl
     $notices = SSNotices::get_instance();
     $db = SSDatabase::get_instance();
     $feeds = $db->get( array('feed_url'=> $feed_url));
-    if( (!($selected_feed_id > 0)) && !empty($feeds))
+    $stored_feed = null;
+    if(!empty($feeds))
     {
       $stored_feed = reset( $feeds );
-      $notices->add_error( __( 
-        "Feed URL exist already for User-ID (".
-        $stored_feed->feed_owner. '), can also be in Trash ', 
-        'events-ss' ). 
-        $feed_url );
-      return;
+    }
+    if(!($selected_feed_id > 0)) 
+    {
+      if(!empty($feeds))
+      {
+        $notices->add_error( __( 
+          "Feed URL exist already for User-ID (".
+          $stored_feed->feed_owner. 
+          '), can also be in Trash ', 
+          'events-ss' ). 
+          $feed_url );
+        return;
+      }
     }
 
+    $feed_type = null;
+    if(!empty($stored_feed))
+    {
+      $feed_type = $stored_feed->feed_type;
+    }
 
     $instance = SSImporterFactory::get_instance();
-    $importer = $instance->create_importer($feed_url);
+
+    if(!$instance->is_valid_feedtype($feed_type))
+    {
+      $notices->add_error( __( 
+        "Feed URL-Type is not valid for feed_url (".
+          $feed_type. ')', 'events-ss' ). 
+          $feed_url );
+        return;
+    }
+
+    $importer = $instance->create_importer($feed_type,
+                                           $feed_url);
     if(empty($importer))
     {
       //echo 'No Importer instance found for feed url' . $feed_url;
@@ -105,16 +129,20 @@ class SSFeedAdminControl
     }
 
     $feed_uuid = $importer->read_feed_uuid();
-    $feeds = $db->get( array('feed_uuid'=> $feed_uuid));
-    if( (!($selected_feed_id > 0)) && !empty($feeds))
+    if( !($selected_feed_id > 0)) 
     {
-      $stored_feed = reset( $feeds );
-      $notices->add_error( __( 
-        "Feed UUID exist already for User-ID (".
-        $stored_feed->feed_owner. '), can also be in Trash ', 
-        'events-ss' ). 
-        $feed_url );
-      return;
+      $feeds = $db->get( array('feed_uuid'=> $feed_uuid));
+      if(!empty($feeds))
+      {
+        $stored_feed = reset( $feeds );
+        $notices->add_error( __( 
+          "Feed UUID exist already for User-ID (".
+          $stored_feed->feed_owner. 
+          '), can also be in Trash ', 
+          'events-ss' ). 
+          $feed_url );
+        return;
+      }
     }
 
     $importer->import();

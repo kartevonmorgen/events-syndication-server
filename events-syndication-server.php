@@ -110,6 +110,7 @@ final class EventsSyndicationServer
     // -- MODELS
     include_once( $dir . 'inc/models/class-ss-database.php');
     include_once( $dir . 'inc/models/class-ss-notices.php' 	);
+    include_once( $dir . 'inc/models/class-ss-importtype.php');
     include_once( $dir . 'inc/models/class-ss-abstractimport.php');
     include_once( $dir . 'inc/models/class-ss-essimport.php');
     include_once( $dir . 'inc/models/class-ss-icalimport.php');

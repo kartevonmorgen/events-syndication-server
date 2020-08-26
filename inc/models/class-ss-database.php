@@ -107,6 +107,7 @@ final class SSDatabase
 			feed_post_ids  VARCHAR( 128 ) 	CHARACTER SET utf8 COLLATE utf8_unicode_ci 	NOT NULL,
 			feed_title  VARCHAR( 256 ) 	CHARACTER SET utf8 COLLATE utf8_unicode_ci 	NOT NULL,
 			feed_host   VARCHAR( 128 ) 	CHARACTER SET utf8 COLLATE utf8_unicode_ci 	NOT NULL,
+			feed_type   VARCHAR( 128 ) 	CHARACTER SET utf8 COLLATE utf8_unicode_ci 	NOT NULL,
 			feed_url    VARCHAR( 4096 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci 	NOT NULL,
 			feed_status ENUM('".SSDatabase::FEED_STATUS_ACTIVE."','".SSDatabase::FEED_STATUS_DELETED."') 	CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '".SSDatabase::FEED_STATUS_ACTIVE."',
 			feed_mode		ENUM('".SSDatabase::FEED_MODE_STANDALONE."','".SSDatabase::FEED_MODE_CRON."') 		CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '".SSDatabase::FEED_MODE_STANDALONE."',
@@ -148,6 +149,7 @@ final class SSDatabase
 				( ( isset( $DATA_['feed_post_ids'] 	) )? " AND 	feed_post_ids	= ".$db->prepare( "%s", $DATA_['feed_post_ids']  ) : "" ) .
 				( ( isset( $DATA_['feed_title'] 	) )? " AND 	feed_title		= ".$db->prepare( "%s", $DATA_['feed_title'] 	 ) : "" ) .
 				( ( isset( $DATA_['feed_host'] 		) )? " AND 	feed_host		= ".$db->prepare( "%s", $DATA_['feed_host'] 	 ) : "" ) .
+				( ( isset( $DATA_['feed_type'] 		) )? " AND 	feed_type		= ".$db->prepare( "%s", $DATA_['feed_type'] 	 ) : "" ) .
 				( ( isset( $DATA_['feed_url'] 		) )? " AND 	feed_url		= ".$db->prepare( "%s", $DATA_['feed_url'] 		 ) : "" ) .
 				( ( isset( $DATA_['feed_mode'] 		) )? " AND 	feed_mode		= ".$db->prepare( "%s", $DATA_['feed_mode'] 	 ) : "" );
 
@@ -173,6 +175,7 @@ final class SSDatabase
 				(( isset(  $DATA_['feed_post_ids'] )) ? "feed_post_ids," 	: "" ) .
 				(( isset(  $DATA_['feed_title'] )) ? "feed_title," : "" ) .
 				(( isset(  $DATA_['feed_host'] )) ? "feed_host," : "" ) .
+				(( isset(  $DATA_['feed_type'] )) ? "feed_type," : "" ) .
 				(( isset(  $DATA_['feed_url'] )) ? "feed_url," 		: "" ) .
 				(( isset(  $DATA_['feed_status'] )) ? "feed_status," : "" ) .
 				(( isset(  $DATA_['feed_mode'] )) ? "feed_mode," : "" ) .
@@ -185,6 +188,7 @@ final class SSDatabase
 				( ( isset(  $DATA_['feed_post_ids'] 	) )? $db->prepare( "%s", $DATA_['feed_post_ids']  	) . "," : "" ) .
 				( ( isset(  $DATA_['feed_title'] 		) )? $db->prepare( "%s", $DATA_['feed_title'] 	 	) . "," : "" ) .
 				( ( isset(  $DATA_['feed_host'] 		) )? $db->prepare( "%s", $DATA_['feed_host'] 	 	) . "," : "" ) .
+				( ( isset(  $DATA_['feed_type'] 		) )? $db->prepare( "%s", $DATA_['feed_type'] 	 	) . "," : "" ) .
 				( ( isset(  $DATA_['feed_url'] 		 	) )? $db->prepare( "%s", $DATA_['feed_url'] 		) . "," : "" ) .
 				( ( isset(  $DATA_['feed_status'] 	 	) )? $db->prepare( "%s", $DATA_['feed_status'] 		) . "," : "" ) .
 				( ( isset(  $DATA_['feed_mode'] 		) )? $db->prepare( "%s", $DATA_['feed_mode'] 	 	) . "," : "" ) .
@@ -199,6 +203,7 @@ final class SSDatabase
 				(( isset( $DATA_['feed_post_ids'] 	) )? ",feed_post_ids	= " . $db->prepare( "%s", $DATA_['feed_post_ids'] 	) : "" ) .
 				(( isset( $DATA_['feed_title'] 		) )? ",feed_title		= " . $db->prepare( "%s", $DATA_['feed_title'] 		) : "" ) .
 				(( isset( $DATA_['feed_host'] 		) )? ",feed_host		= " . $db->prepare( "%s", $DATA_['feed_host'] 		) : "" ) .
+				(( isset( $DATA_['feed_type'] 		) )? ",feed_type		= " . $db->prepare( "%s", $DATA_['feed_type'] 		) : "" ) .
 				(( isset( $DATA_['feed_url'] 		) )? ",feed_url			= " . $db->prepare( "%s", $DATA_['feed_url'] 		) : "" ) .
 				(( isset( $DATA_['feed_status'] 	) )? ",feed_status		= " . $db->prepare( "%s", $DATA_['feed_status'] 	) : "" ) .
 				(( isset( $DATA_['feed_mode'] 		) )? ",feed_mode		= " . $db->prepare( "%s", $DATA_['feed_mode'] 		) : "" ) .
@@ -224,6 +229,7 @@ final class SSDatabase
 			(( isset( $DATA_['feed_post_ids'] 	) )? " AND 	feed_post_ids	= " . $db->prepare( "%s", $DATA_['feed_post_ids']) : "" ) .
 			(( isset( $DATA_['feed_title'] 		) )? " AND 	feed_title		= " . $db->prepare( "%s", $DATA_['feed_title'] 		) : "" ) .
 			(( isset( $DATA_['feed_host'] 		) )? " AND 	feed_host		= " . $db->prepare( "%s", $DATA_['feed_host'] 		) : "" ) .
+			(( isset( $DATA_['feed_type'] 		) )? " AND 	feed_type		= " . $db->prepare( "%s", $DATA_['feed_type'] 		) : "" ) .
 			(( isset( $DATA_['feed_url'] 		) )? " AND 	feed_url		= " . $db->prepare( "%s", $DATA_['feed_url'] 		) : "" ) .
 			(( isset( $DATA_['feed_mode'] 		) )? " AND 	feed_mode		= " . $db->prepare( "%s", $DATA_['feed_mode'] 		) : "" );
 
@@ -286,7 +292,8 @@ final class SSDatabase
     {
       if ( $feed && property_exists( $feed, 'feed_url' ) == TRUE )
 			{
-        $importer = $instance->create_importer($feed->feed_url);
+        $feed_type = $feed->feed_type;
+        $importer = $instance->create_importer($feed_type, $feed->feed_url);
         if(!empty($importer))
         {
           $importer->import();

@@ -11,6 +11,7 @@
 abstract class SSAbstractImport
 {
   private $_feed_url;
+  private $_importtype;
   private $_feed_update_daily = false;
   private $_owner_user_id = 0;
 
@@ -22,7 +23,7 @@ abstract class SSAbstractImport
   private $_lines_data;
   private $_xml_data;
 
-	function __construct($feed_url)
+	function __construct($importtype, $feed_url)
   {
     $this->_feed_url = strtr( urldecode( esc_html( $feed_url ) ), array(
 		    "&lt;"   => "<",
@@ -32,6 +33,12 @@ abstract class SSAbstractImport
 		    "&amp;"  => "&"
 		) );
 
+    $this->_importtype = $importtype;
+  }
+
+  public function get_importtype()
+  {
+    return $this->_importtype;
   }
 
   public abstract function is_feed_valid();
@@ -190,6 +197,9 @@ abstract class SSAbstractImport
       $user_owner_id = get_current_user_id();
     }
 
+    $importtype = $this->get_importtype();
+    $feedtypeid = $importtype->get_id();
+
     $success = $db->add( array(
       'feed_id' => $feed_id,
       'feed_uuid'	=> $this->get_feed_uuid(),
@@ -197,6 +207,7 @@ abstract class SSAbstractImport
       'feed_event_ids' 	=> implode(',',$updated_event_ids ),
       'feed_title'		=> $this->get_feed_title(), 
       'feed_host'			=> $dom_[ 'host' ],
+      'feed_type'			=> $feedtypeid,
       'feed_url'			=> $this->get_feed_url(),
       'feed_status'		=> SSDatabase::FEED_STATUS_ACTIVE,
       'feed_mode'			=> ( $this->is_feed_update_daily() ? SSDatabase::FEED_MODE_CRON : SSDatabase::FEED_MODE_STANDALONE )));
