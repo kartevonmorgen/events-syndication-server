@@ -89,6 +89,9 @@ final class SSDatabase
     }
 
     $this->_table = $prefix . SSDatabase::FEED_TABLE_NAME;
+
+    add_action( 'deleted_user', 
+                array( $this, 'delete_for_user') ); 
 	}
 
 	public function createTable()
@@ -235,6 +238,11 @@ final class SSDatabase
 
 		return $db->get_var( $sql );
 	}
+
+  public function delete_for_user($user_id)
+  {
+    $this->delete( array ( 'feed_owner' => $user_id ));
+  }
 
 	public function delete( Array $DATA_=NULL )
 	{

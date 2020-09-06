@@ -211,6 +211,8 @@ class SSESSImport extends SSAbstractImport
       return;
     }
 
+    $category_prefix = get_option('ss_category_prefix');
+
     foreach ( $feedChild->children() as $cItem )
     {
       $eiCatSlug = null;
@@ -223,6 +225,8 @@ class SSESSImport extends SSAbstractImport
         switch ($cItemChildName) 
         {
            case "id":
+             $value = str_replace($category_prefix, 
+                                  '', $value);
              $eiCatSlug = $value;
              break;
            case "name":

@@ -44,6 +44,10 @@ class SSAdminControl
     $field = $section->add_checkbox('ss_backlink_enabled', 
                                     'Add link from source');
     $field->set_description('Add at the bottom of the events description a link to the website where the event is coming from');
+
+    $field = $section->add_textfield('ss_category_prefix', 
+                                    'Strip prefix from category');
+    $field->set_description('Strip this prefix from imported categories');
     
     $page->register();
   }
