@@ -151,9 +151,9 @@ register_activation_hook( __FILE__, array($io,	'set_activation'));
 register_deactivation_hook( __FILE__, array($io, 'set_deactivation'));
 register_uninstall_hook( __FILE__, array( $io, 'set_uninstall'));
 
-add_action( SS_IO::CRON_EVENT_HOOK, "update_feeds_daily" );
+add_action( SS_IO::CRON_EVENT_HOOK, 'SS_update_feeds_daily' );
 
-function update_feeds_daily()
+function SS_update_feeds_daily()
 {
   $instance = EventsSyndicationServer::get_instance();
   $instance->load_MVC_files();

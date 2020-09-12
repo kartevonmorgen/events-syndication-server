@@ -48,6 +48,10 @@ class SSAdminControl
     $field = $section->add_textfield('ss_category_prefix', 
                                     'Strip prefix from category');
     $field->set_description('Strip this prefix from imported categories');
+
+    $field = $section->add_textarea('ss_cron_message', 
+                                    'Last message eventscron');
+    $field->set_description('Last message from daily cron job to retrieve events');
     
     $page->register();
   }

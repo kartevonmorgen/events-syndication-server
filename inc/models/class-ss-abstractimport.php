@@ -55,9 +55,14 @@ abstract class SSAbstractImport
 
     $updated_event_ids = array();
 
-		if ( !is_user_logged_in() && ! $this->is_feed_update_daily() ) 
+		if ( ! $this->is_feed_update_daily() ) 
     {
-      return;
+      if( !is_user_logged_in() )
+      {
+        $this->set_error( 
+          "No user logged in ". $this->get_feed_url() );
+        return;
+      }
     }
 
 		if ( ! $this->is_feed_valid() )

@@ -287,27 +287,78 @@ final class SSDatabase
 
 	public function update_feeds_daily()
 	{
+    $cron_message = '';
+    $cron_message .= 'Start update_feeds_daily ' . get_date_from_gmt(date("Y-m-d H:i:s"));
+    $cron_message .= PHP_EOL;
+    update_option('ss_cron_message', $cron_message );
+
 		$feeds = $this->get( 
       array( 'feed_mode' => SSDatabase::FEED_MODE_CRON ));
 
     $instance = SSImporterFactory::get_instance();
 		if ( empty( $feeds ))
 		{
+      $cron_message .= 'No feeds found';
+      $cron_message .= PHP_EOL;
+      update_option('ss_cron_message', $cron_message );
       return;
     }
 
     foreach ( $feeds as $feed )
     {
-      if ( $feed && property_exists( $feed, 'feed_url' ) == TRUE )
+      if ( empty( $feed ))
 			{
-        $feed_type = $feed->feed_type;
-        $importer = $instance->create_importer($feed_type, $feed->feed_url);
-        if(!empty($importer))
-        {
-          $importer->import();
-        }
-			}
+        $cron_message .= 'Feed is empty';
+        $cron_message .= PHP_EOL;
+        continue;
+      }
+
+      $feed_url = $feed->feed_url;
+      $feed_type = $feed->feed_type;
+      $feed_user = $feed->feed_owner;
+
+      $cron_message .= 'Update Feed ' . get_date_from_gmt( date("Y-m-d H:i:s"));
+      $cron_message .= PHP_EOL;
+      $cron_message .= 'Feed (' . $feed_type . '): ' . 
+                                  $feed_url; 
+      $cron_message .= PHP_EOL;
+      $cron_message .= 'Feed-Owner: ' . $feed_user;
+      $cron_message .= PHP_EOL;
+
+      if ( empty($feed_url) || empty($feed_type) )
+			{
+        $cron_message .= 'Feed URL or Type is empty';
+        $cron_message .= PHP_EOL;
+        continue;
+      }
+
+      $importer = $instance->create_importer($feed_type, $feed_url);
+      if(empty($importer))
+      {
+        $cron_message .= 'Importer could not be created';
+        $cron_message .= PHP_EOL;
+        continue;
+      }
+      wp_set_current_user($feed_user);
+      $importer->set_feed_update_daily(true);
+      $importer->set_owner_user_id($feed_user);
+      $importer->import();
+      if( $importer->has_error() )
+      {
+        $cron_message .= $importer->get_error();
+        $cron_message .= PHP_EOL;
+      }
+      else
+      {
+        $cron_message .= 'Import done sucessfully';
+        $cron_message .= PHP_EOL;
+      }
+      wp_set_current_user(0);
+      update_option('ss_cron_message', $cron_message );
 		}
+    $cron_message .= 'Cronjob finished';
+    $cron_message .= PHP_EOL;
+    update_option('ss_cron_message', $cron_message );
 	}
 
   private function get_table()

@@ -76,6 +76,7 @@ final class SS_IO
 		  wp_schedule_event( time(), 'daily', 
         SS_IO::CRON_EVENT_HOOK ); 
     }
+    //SS_update_feeds_daily();
 	}
 
 	public function set_deactivation()
