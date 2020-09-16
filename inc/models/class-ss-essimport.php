@@ -184,6 +184,9 @@ class SSESSImport extends SSAbstractImport
         case "places":
           $this->read_ess_feed_places($eiEvent, $feedChild);
           break;
+        case "people":
+          $this->read_ess_feed_people($eiEvent, $feedChild);
+          break;
       }
     }
     return $eiEvent;
@@ -323,6 +326,41 @@ class SSESSImport extends SSAbstractImport
       }
     }
     $eiEvent->set_location($eiEventLocation);
+  }
+
+  function read_ess_feed_people($eiEvent, $feedChild)
+  {
+    if( empty($feedChild->children()) )
+    {
+      return;
+    }
+
+    foreach ( $feedChild->children() as $cItem )
+    {
+      $eiStartDate = null;
+      $eiDuration = 1;
+      foreach ( $cItem->children() as $cItemChild )
+      {
+        $cItemChildName = strtolower($cItemChild->getName());
+        $value = trim( $cItemChild );
+        
+        switch ($cItemChildName) 
+        {
+           case "name":
+             $eiEvent->set_contact_name( $value );
+             break;
+           case "phone":
+             $eiEvent->set_contact_phone( $value );
+             break;
+           case "email":
+             $eiEvent->set_contact_email( $value );
+             break;
+           case "uri":
+             $eiEvent->set_contact_website( $value );
+             break;
+        }
+      }
+    }
   }
               
 }
