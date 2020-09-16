@@ -123,7 +123,34 @@ abstract class SSAbstractImport
         $eiEvent->set_blog_id( $current_site->blog_id );
       }
 
+      // Fill Lat/Lon coordinates by osm
+      // so we can check if the location has been changed.
+      $wpLocationHelper = new WPLocationHelper();
+      $eiEventLocation = $eiEvent->get_location();
+      if(!empty($eiEventLocation))
+      {
+        $eiEventLocation = 
+          $wpLocationHelper->fill_by_osm_nominatim(
+            $eiEventLocation);
+        $eiEvent->set_location($eiEventLocation);
+      }
+
+      // Check if the Event has been changed
+      // only by changes we save it.
+      // This prevents not needed saves and updates 
+      // to the Karte von Morgen
       $eiInterface = EIInterface::get_instance();
+      $oldEiEvent = $eiInterface->get_event_by_uid(
+                      $eiEvent->get_uid());
+      if(!empty($oldEiEvent) && 
+        $oldEiEvent->equals_by_content($eiEvent))
+      {
+        array_push( $updated_event_ids, 
+                    $oldEiEvent->get_event_id());
+        continue;
+      }
+
+      // Only save if we have changes
       $result = $eiInterface->save_event($eiEvent);
       if( $result->has_error() )
       {
