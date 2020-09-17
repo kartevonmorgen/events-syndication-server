@@ -90,13 +90,34 @@ abstract class SSAbstractImport
 
     $stored_feed = $this->get_stored_feed(
                                $this->get_feed_uuid());
+    if(empty($stored_feed))
+    {
+      $this->set_owner_user_id( get_current_user_id() );
+    }
+    else
+    {
+      $this->set_owner_user_id( $stored_feed->feed_owner );
+    }
+
+    $logger = new UserMetaLogger('feed_update_log',
+                                 $this->get_owner_user_id());
+    $logger->add_date();
+    $logger->add_line('Update Feed (user' . 
+      $this->get_owner_user_id() . '): '. 
+      $this->get_feed_url());
 
     $now = time();
     foreach ( $eiEvents as $eiEvent )
     {
+      $logger->remove_prefix();
+      $logger->add_newline();
+      $logger->add_date();
+      $logger->add_line('Update Event ' . $eiEvent->get_uid());
+      $logger->add_prefix('  ');
       // Do not import events from the past
       if(strtotime($eiEvent->get_start_date()) < $now)
       {
+        $logger->add_line('Event is too old, no update');
         continue;
       }
 
@@ -104,6 +125,7 @@ abstract class SSAbstractImport
       // as the events url/link
       if( !$this->is_linkurl_valid( $eiEvent ))
       {
+        $logger->add_line('the feed_url is invalid');
         continue;
       }
 
@@ -113,10 +135,6 @@ abstract class SSAbstractImport
       }
 
       $eiEvent->set_owner_user_id($this->get_owner_user_id());
-      if ( $eiEvent->get_owner_user_id() === 0 )
-      {
-        $eiEvent->set_owner_user_id( get_current_user_id() );
-      }
 
 		  if( isset( $current_site ) )
       {
@@ -129,9 +147,15 @@ abstract class SSAbstractImport
       $eiEventLocation = $eiEvent->get_location();
       if(!empty($eiEventLocation))
       {
+        $logger->add_line('fill location (' . 
+          $eiEventLocation->to_string() . ') by osm');
         $eiEventLocation = 
           $wpLocationHelper->fill_by_osm_nominatim(
             $eiEventLocation);
+        $logger->add_line('  lat=' . 
+          $eiEventLocation->get_lat()); 
+        $logger->add_line('  lon=' . 
+          $eiEventLocation->get_lon()); 
         $eiEvent->set_location($eiEventLocation);
       }
 
@@ -142,19 +166,33 @@ abstract class SSAbstractImport
       $eiInterface = EIInterface::get_instance();
       $oldEiEvent = $eiInterface->get_event_by_uid(
                       $eiEvent->get_uid());
-      if(!empty($oldEiEvent) && 
-        $oldEiEvent->equals_by_content($eiEvent))
+      if(empty($oldEiEvent))
       {
-        array_push( $updated_event_ids, 
-                    $oldEiEvent->get_event_id());
-        continue;
+        $logger->add_line('event does not exist'); 
       }
+      else
+      {
+        $result = $oldEiEvent->equals_by_content($eiEvent);
+        if($result->is_true())
+        {
+          $logger->add_line('events are equal, ' .
+                            'so we do NOT update'); 
+          array_push( $updated_event_ids, 
+                      $oldEiEvent->get_event_id());
+          continue;
+        }
+      }
+      $logger->add_line('event has been changed (' . 
+        $result->get_message() . ') so we save it'); 
 
       // Only save if we have changes
       $result = $eiInterface->save_event($eiEvent);
       if( $result->has_error() )
       {
+        $logger->add_line('save_event gives an ERROR (' . 
+          $result->get_error() . ') '); 
         $this->set_error($result->get_error());
+        $logger->save();
         return;
       }
 
@@ -163,6 +201,11 @@ abstract class SSAbstractImport
         array_push( $updated_event_ids, $result->get_event_id());
       }
     }
+
+    $logger->remove_prefix();
+    $logger->add_newline();
+    $logger->add_line('updates finished: save the new ' .
+                      'feed status');
 
     $this->save_stored_feed($stored_feed, $updated_event_ids);
 
@@ -175,8 +218,14 @@ abstract class SSAbstractImport
 
     if(empty($last_event_ids))
     {
+      $logger->add_line('-- nothing to delete, ' . 
+                        'update feed finished ---');
+      $logger->save();
       return;
     }
+
+    $logger->add_line('delete no longer updated events ');
+    $logger->add_prefix('  ');
 
     foreach($last_event_ids as $last_event_id)
     {
@@ -185,10 +234,14 @@ abstract class SSAbstractImport
         continue;
       }
 
+      $logger->add_line('delete event (id=' . 
+                        $last_event_id. ')');
       $eiInterface = EIInterface::get_instance();
       $eiInterface->delete_event_by_event_id($last_event_id);
     }
-
+    $logger->remove_prefix();
+    $logger->add_line('-- update feed finished ---');
+    $logger->save();
   }
           
   private function get_stored_feed($feed_uuid)
@@ -202,7 +255,6 @@ abstract class SSAbstractImport
     }
     $stored_feed = reset( $feeds );
 
-    $this->set_owner_user_id( $stored_feed->feed_owner );
     if( $stored_feed->feed_mode === SSDatabase::FEED_MODE_CRON )
     {
       $this->set_feed_update_daily(true);
