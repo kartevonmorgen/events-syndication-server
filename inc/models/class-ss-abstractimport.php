@@ -99,12 +99,13 @@ abstract class SSAbstractImport
       $this->set_owner_user_id( $stored_feed->feed_owner );
     }
 
-    $logger = new UserMetaLogger('feed_update_log',
+    $logger = new UserMetaLogger('initiative_feed_update_log',
                                  $this->get_owner_user_id());
     $logger->add_date();
     $logger->add_line('Update Feed (user' . 
       $this->get_owner_user_id() . '): '. 
       $this->get_feed_url());
+    $logger->save();
 
     $now = time();
     foreach ( $eiEvents as $eiEvent )
