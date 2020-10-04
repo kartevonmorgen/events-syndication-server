@@ -182,9 +182,9 @@ abstract class SSAbstractImport
                       $oldEiEvent->get_event_id());
           continue;
         }
+        $logger->add_line('event has been changed (' . 
+          $result->get_message() . ') so we save it'); 
       }
-      $logger->add_line('event has been changed (' . 
-        $result->get_message() . ') so we save it'); 
 
       // Only save if we have changes
       $result = $eiInterface->save_event($eiEvent);
@@ -230,6 +230,11 @@ abstract class SSAbstractImport
 
     foreach($last_event_ids as $last_event_id)
     {
+      if(empty($last_event_id))
+      {
+        continue;
+      }
+
       if(in_array($last_event_id, $updated_event_ids))
       {
         continue;
