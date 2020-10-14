@@ -135,6 +135,12 @@ abstract class SSAbstractImport
         $this->add_backlink($eiEvent);
       }
 
+      $eiEvent->set_post_status('pending');
+      if( $this->is_publish_directly() )
+      {
+        $eiEvent->set_post_status('publish');
+      }
+
       $eiEvent->set_owner_user_id($this->get_owner_user_id());
 
 		  if( isset( $current_site ) )
@@ -426,6 +432,11 @@ abstract class SSAbstractImport
   public function is_backlink_enabled()
   {
     return get_option('ss_backlink_enabled', false);
+  }
+  
+  public function is_publish_directly()
+  {
+    return get_option('ss_publish_directly', false);
   }
   
   public function add_backlink($eiEvent)

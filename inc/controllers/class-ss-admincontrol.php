@@ -38,9 +38,9 @@ class SSAdminControl
        "This section defines the way the imported feeds " . 
        "events will appears in your event dashboard.");
 
-    $field = $section->add_checkbox('ss_syndication_status', 
+    $field = $section->add_checkbox('ss_publish_directly', 
                                     'Publish events directly');
-    $field->set_description('If events are imported, then publish them directly on the website, otherwise the state will be pending (Not Implemented Yet)');
+    $field->set_description('If events are imported, then publish them directly on the website, otherwise the state will be pending ');
     $field = $section->add_checkbox('ss_backlink_enabled', 
                                     'Add link from source');
     $field->set_description('Add at the bottom of the events description a link to the website where the event is coming from');
