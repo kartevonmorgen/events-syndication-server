@@ -92,7 +92,10 @@ abstract class SSAbstractImport
                                $this->get_feed_uuid());
     if(empty($stored_feed))
     {
-      $this->set_owner_user_id( get_current_user_id() );
+      if(empty($this->get_owner_user_id()))
+      {
+        $this->set_owner_user_id( get_current_user_id() );
+      }
     }
     else
     {
