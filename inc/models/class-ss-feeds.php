@@ -170,8 +170,11 @@ class SSFeeds
 
   function update_feedlink($actions, $post)
   {
-    $update_link = admin_url( 'edit.php?post_type=ssfeed&amp;post=' . $post->ID . '&amp;page=update_feed');
-    $actions['update_feed'] = '<a href="'. $update_link . '" title="Update Feed" rel="permalink">Update Feed</a>';
+    if($post->post_type === 'ssfeed')
+    {
+      $update_link = admin_url( 'edit.php?post_type=ssfeed&amp;post=' . $post->ID . '&amp;page=update_feed');
+      $actions['update_feed'] = '<a href="'. $update_link . '" title="Update Feed" rel="permalink">Update Feed</a>';
+    }
     return $actions;
   }
 
