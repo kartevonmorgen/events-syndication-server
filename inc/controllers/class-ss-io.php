@@ -58,9 +58,6 @@ final class SS_IO
     $plugin = isset( $_REQUEST[ 'plugin' ] ) ? $_REQUEST[ 'plugin' ] : EventsSyndicationServer::NAME;
     check_admin_referer( "activate-plugin_{$plugin}" );
 
-    $db = SSDatabase::get_instance();
-    $db->createTable();
-
     $role = get_role( 'administrator' );
     $role->add_cap( 'manage_event_feeds');
     $role->add_cap( 'manage_other_event_feeds');
@@ -76,7 +73,6 @@ final class SS_IO
 		  wp_schedule_event( time(), 'daily', 
         SS_IO::CRON_EVENT_HOOK ); 
     }
-    //SS_update_feeds_daily();
 	}
 
 	public function set_deactivation()
@@ -88,10 +84,6 @@ final class SS_IO
 
     $plugin = isset( $_REQUEST[ 'plugin' ] ) ? $_REQUEST[ 'plugin' ] : EventsSyndicationServer::NAME;
     check_admin_referer( "deactivate-plugin_{$plugin}" );
-
-		// DEBUG: remove DB while desactivating the plugin
-		//if( !EM_MS_GLOBAL || (EM_MS_GLOBAL && is_main_blog()) )
-		//	ESSDatabase::deteteTable();
 
 		// -- Remove Schedule Hook (CRON tasks)
 		wp_clear_scheduled_hook( SS_IO::CRON_EVENT_HOOK );
@@ -105,9 +97,6 @@ final class SS_IO
     }
 
     check_admin_referer( 'bulk-plugins' );
-
-    $db = SSDatabase::get_instance();
-    $db->deleteTable();
 
 		// -- Remove Schedule Hook (CRON tasks)
 		wp_clear_scheduled_hook( SS_IO::CRON_EVENT_HOOK );

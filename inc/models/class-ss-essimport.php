@@ -25,9 +25,7 @@ class SSESSImport extends SSAbstractImport
     }
 
     $feed_url = $this->get_feed_url();
-
-    $instance = SSFeedAdminControl::get_instance(); 
-		if ( $instance->isValidURL( $feed_url ) == FALSE )
+		if ( $this->is_validURL( $feed_url ) == FALSE )
 		{
 			$this->set_error( 'The ESS URL is not valid: '. $feed_url);
 			return false;

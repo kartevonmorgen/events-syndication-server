@@ -30,6 +30,8 @@ class SSAdminControl
 
   public function start() 
   {
+    $this->set_default_values();
+
     $page = new UISettingsPage('events-syndicatoin-server', 
                                'Syndication Server Settings');
     $page->set_submenu_page(true, 'events-interface-options-menu');
@@ -55,4 +57,21 @@ class SSAdminControl
     
     $page->register();
   }
+
+  public function set_default_values()
+	{
+		$ss_options = array(
+			// -- Syndication Settings
+			'ss_syndication_status' 	=> FALSE, 
+			'ss_backlink_enabled' 		=> FALSE,
+
+				// -- Feed's Elements
+				'ss_feed_import_images'	=> FALSE,
+				'ss_feed_import_videos'	=> FALSE,
+				'ss_feed_import_sounds'	=> FALSE
+		);
+
+		foreach( $ss_options as $key => $value )
+			add_option( $key, $value );
+	}
 }

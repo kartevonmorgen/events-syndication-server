@@ -23,22 +23,61 @@ abstract class SSAbstractImport
   private $_lines_data;
   private $_xml_data;
 
-	function __construct($importtype, $feed_url)
+	function __construct($feed)
   {
-    $this->_feed_url = strtr( urldecode( esc_html( $feed_url ) ), array(
-		    "&lt;"   => "<",
-		    "&gt;"   => ">",
-		    "&quot;" => '""',
-		    "&apos;" => "'",
-		    "&amp;"  => "&"
-		) );
+    $this->_feed = $feed;
+  }
 
-    $this->_importtype = $importtype;
+  public function get_feed()
+  {
+    return $this->_feed;
+  }
+
+  public function get_feed_id()
+  {
+    if(empty($this->get_feed()))
+    {
+      return 0;
+    }
+    return $this->get_feed()->ID;
+  }
+
+  public function is_feed_update_daily()
+  {
+    return $this->get_feed_meta('ss_feedupdatedaily');
+  }
+
+  public function get_feed_url()
+  {
+    return $this->get_feed_meta('ss_feedurl');
+  }
+
+  public function get_owner_user_id()
+  {
+    if(empty($this->get_feed()))
+    {
+      return 0;
+    }
+    return $this->get_feed()->post_author;
+  }
+
+  public function get_feed_meta($key)
+  {
+    return get_post_meta($this->get_feed_id(), $key, 1);
   }
 
   public function get_importtype()
   {
-    return $this->_importtype;
+    $importtypeid = $this->get_feed_meta('ss_feedurltype');
+
+    $factory = SSImporterFactory::get_instance();
+    return $factory->get_importtype( $importtypeid );
+  }
+
+  public function get_feed_eventids()
+  {
+    return explode(',', 
+     $this->get_feed_meta('ss_feed_eventids'));
   }
 
   public abstract function is_feed_valid();
@@ -88,24 +127,11 @@ abstract class SSAbstractImport
       return;
     }
 
-    $stored_feed = $this->get_stored_feed(
-                               $this->get_feed_uuid());
-    if(empty($stored_feed))
-    {
-      if(empty($this->get_owner_user_id()))
-      {
-        $this->set_owner_user_id( get_current_user_id() );
-      }
-    }
-    else
-    {
-      $this->set_owner_user_id( $stored_feed->feed_owner );
-    }
-
-    $logger = new UserMetaLogger('initiative_feed_update_log',
-                                 $this->get_owner_user_id());
+    $logger = new PostMetaLogger('ss_feed_updatelog',
+                                 $this->get_feed_id());
     $logger->add_date();
-    $logger->add_line('Update Feed (user=' . 
+    $logger->add_line('Update Feed (feedid=' . 
+      $this->get_feed_id() . ', user=' . 
       $this->get_owner_user_id() . '): '. 
       $this->get_feed_url());
     $logger->save();
@@ -217,15 +243,13 @@ abstract class SSAbstractImport
     $logger->add_line('updates finished: save the new ' .
                       'feed status');
 
-    $this->save_stored_feed($stored_feed, $updated_event_ids);
+    // Save the eventids that were already there
+    $last_event_ids = $this->get_feed_eventids();
 
-    // If the feed exists already, we check if some events are 
+    $this->save_feed($updated_event_ids);
+
+    // We check if some events are 
     // no longer in the feed, if so, we delete these events.
-    if(!empty( $stored_feed))
-    {
-      $last_event_ids = explode(',',$stored_feed->feed_event_ids);
-    }
-
     if(empty($last_event_ids))
     {
       $logger->add_line('-- nothing to delete, ' . 
@@ -259,64 +283,28 @@ abstract class SSAbstractImport
     $logger->save();
   }
           
-  private function get_stored_feed($feed_uuid)
-  {
-    $db = SSDatabase::get_instance();
-
-    $feeds = $db->get(array('feed_uuid'=>$feed_uuid));
-    if(empty($feeds))
-    {
-      return null;
-    }
-    $stored_feed = reset( $feeds );
-
-    if( $stored_feed->feed_mode === SSDatabase::FEED_MODE_CRON )
-    {
-      $this->set_feed_update_daily(true);
-    }
-    return $stored_feed;
-  }
-
   // == SAVE FEED ===
-  // Only save the ESS Feed if, at least, one event have been saved.
-  private function save_stored_feed($stored_feed, $updated_event_ids)
+  // Only save the Feed if, 
+  // at least, one event have been saved.
+  private function save_feed($updated_event_ids)
   {
-    $feed_id = 0;
-
-    $dom_ = parse_url( $this->get_feed_url() );
-    if(!empty($stored_feed))
+    $feed_id = $this->get_feed_id();
+    if(empty($feed_id))
     {
-      $feed_id = $stored_feed->feed_id;
-    }
-    $db = SSDatabase::get_instance();
-
-    $user_owner_id = $this->get_owner_user_id();
-    if($user_owner_id === 0)
-    {
-      $user_owner_id = get_current_user_id();
+      $this->set_error("Feed Id is 0");
+      return;
     }
 
-    $importtype = $this->get_importtype();
-    $feedtypeid = $importtype->get_id();
+    $lastupdate = get_date_from_gmt(date("Y-m-d H:i:s"));
 
-    $success = $db->add( array(
-      'feed_id' => $feed_id,
-      'feed_uuid'	=> $this->get_feed_uuid(),
-      'feed_owner' => intval( $user_owner_id ),
-      'feed_event_ids' 	=> implode(',',$updated_event_ids ),
-      'feed_title'		=> $this->get_feed_title(), 
-      'feed_host'			=> $dom_[ 'host' ],
-      'feed_type'			=> $feedtypeid,
-      'feed_url'			=> $this->get_feed_url(),
-      'feed_status'		=> SSDatabase::FEED_STATUS_ACTIVE,
-      'feed_mode'			=> ( $this->is_feed_update_daily() ? SSDatabase::FEED_MODE_CRON : SSDatabase::FEED_MODE_STANDALONE )));
-
-    if( !$success )
-    {
-      $this->set_error( 
-        "Impossible to insert the feed in the Database ". 
-        $this->get_feed_url() );
-    }
+    update_post_meta($feed_id, 'ss_feed_title', 
+                     $this->get_feed_title());
+    update_post_meta($feed_id, 'ss_feed_uuid', 
+                     $this->get_feed_uuid());
+    update_post_meta($feed_id, 'ss_feed_lastupdate', 
+                     $lastupdate);
+    update_post_meta($feed_id, 'ss_feed_eventids', 
+                     implode(',',$updated_event_ids ));
 	}
 
   private function is_linkurl_valid($eiEvent)
@@ -387,30 +375,6 @@ abstract class SSAbstractImport
     return $this->_xml_data;
   }
 
-  public function set_feed_update_daily($update_daily)
-  {
-    $this->_feed_update_daily = $update_daily;
-  }
-
-  public function is_feed_update_daily()
-  {
-    return $this->_feed_update_daily;
-  }
-
-  public function get_feed_url()
-  {
-    return $this->_feed_url;
-  }
-
-  public function set_owner_user_id($owner_user_id)
-  {
-    $this->_owner_user_id = $owner_user_id;
-  }
-
-  public function get_owner_user_id()
-  {
-    return $this->_owner_user_id;
-  }
 
   public function set_feed_uuid($feed_uuid)
   {
@@ -467,5 +431,50 @@ abstract class SSAbstractImport
   public function has_error()
   {
     return !empty($this->_error);
+  }
+
+	/**
+	 * Control if the URL is correctly formated (RFC 3986)
+	 * An IP can also be submited as a URL.
+	 *
+	 * @access	public
+	 * @param	String	stringDate string element to control
+	 * @return	Boolean
+	 */
+	public function is_validURL( $url='' )
+	{
+		$url = trim( $url );
+		$ereg = "/^(http|https|ftp):\/\/([A-Z0-9][A-Z0-9_-]*(?:\.[A-Z0-9][A-Z0-9_-]*)+):?(\d+)?\/?/i";
+
+		return ( preg_match( $ereg, $url ) > 0 && strlen( $url ) > 10 )? TRUE : $this->is_validIP( $url );
+	}
+
+	/**
+	 * 	Control if the parameter submited is a valide IP v4
+	 *
+	 * 	@access public
+	 * 	@param	String	Value of the IP to evaluate
+	 * 	@return	Boolean	If the parameter submited is a valide IP return TRUE, FALSE else.
+	 */
+	public function is_validIP( $ip='' )
+	{
+		$ip = trim( $ip );
+		$regexp = '/^((1?\d{1,2}|2[0-4]\d|25[0-5])\.){3}(1?\d{1,2}|2[0-4]\d|25[0-5])$/';
+
+		if ( preg_match( $regexp, $ip ) <= 0 )
+		{
+			return FALSE;
+		}
+		else
+		{
+			$a = explode( ".", $ip );
+
+			if ( $a[0] > 255) { return FALSE; }
+			if ( $a[1] > 255) { return FALSE; }
+			if ( $a[2] > 255) {	return FALSE; }
+			if ( $a[3] > 255) { return FALSE; }
+
+			return TRUE;
+    }
   }
 }

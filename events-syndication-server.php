@@ -60,10 +60,15 @@ if ( !defined( 'EVENTS_SS_VERSION'       ) )
   define( 'EVENTS_SS_VERSION', '1.4' );
 }
 
+include_once( $dir . 'inc/models/class-ss-importtype.php');
+include_once( $dir . 'inc/models/class-ss-importerfactory.php');
+include_once( $dir . 'inc/models/class-ss-feeds.php');
+$feedsModel = SSFeeds::get_instance();
+$feedsModel->start();
 $instance = EventsSyndicationServer::get_instance();
+
 add_action( 'init', array( $instance, 'start' ) );
 
-require_once( EVENTS_SS_DIR . "/inc/models/class-ss-database.php" );
 require_once( EVENTS_SS_DIR . "/inc/controllers/class-ss-io.php" );
 
 final class EventsSyndicationServer
@@ -99,6 +104,7 @@ final class EventsSyndicationServer
       die();
     }
 
+
     add_action( current_filter(), 
                 array( $this, 'load_MVC_files' ), 30 );
 	}
@@ -108,20 +114,13 @@ final class EventsSyndicationServer
     $dir = plugin_dir_path( __FILE__ );
 
     // -- MODELS
-    include_once( $dir . 'inc/models/class-ss-database.php');
     include_once( $dir . 'inc/models/class-ss-notices.php' 	);
-    include_once( $dir . 'inc/models/class-ss-importtype.php');
     include_once( $dir . 'inc/models/class-ss-abstractimport.php');
     include_once( $dir . 'inc/models/class-ss-essimport.php');
     include_once( $dir . 'inc/models/class-ss-icalimport.php');
-    include_once( $dir . 'inc/models/class-ss-importerfactory.php');
-
-    // -- VIEWS
-    include_once( $dir . 'inc/views/class-ui-feedadminpage.php');
 
     // -- CONTROLLERS
     include_once( $dir . 'inc/controllers/class-ss-admincontrol.php');
-    include_once( $dir . 'inc/controllers/class-ss-feedadmincontrol.php');
     include_once( $dir . 'inc/controllers/class-ss-io.php');
 
     // Start logging part
@@ -131,22 +130,15 @@ final class EventsSyndicationServer
     $io = SS_IO::get_instance();
     $io->start();
 
-    // Set up database
-    $db = SSDatabase::get_instance();
-    $db->set_default_values();
-
     // Start UI Settings Part
     $adminControl = SSAdminControl::get_instance();
     $adminControl->start();
-
-    // Start UI Feed Part
-    $feedAdminControl = SSFeedAdminControl::get_instance();
-    $feedAdminControl->start();
   }
 
 }
 
 $io = SS_IO::get_instance();
+
 register_activation_hook( __FILE__, array($io,	'set_activation'));
 register_deactivation_hook( __FILE__, array($io, 'set_deactivation'));
 register_uninstall_hook( __FILE__, array( $io, 'set_uninstall'));
@@ -158,9 +150,9 @@ function SS_update_feeds_daily()
   $instance = EventsSyndicationServer::get_instance();
   $instance->load_MVC_files();
 
-  if ( class_exists('SSDatabase' ) )
+  if ( class_exists('SSFeeds' ) )
   {
-    $db = SSDatabase::get_instance();
+    $db = SSFeeds::get_instance();
     $db->update_feeds_daily();
   }
 }

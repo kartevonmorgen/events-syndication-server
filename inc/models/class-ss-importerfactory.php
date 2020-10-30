@@ -41,11 +41,16 @@ final class SSImporterFactory
     return self::$instance;
   }
 
-  public function create_importer($feed_type, $feed_url)
+  public function create_importer($feed)
   {
+    if(empty($feed))
+    {
+      return null;
+    }
+    $feed_type = get_post_meta($feed->ID,'ss_feedurltype',1);
     $importtype = $this->get_importtype($feed_type);
     $class = $importtype->get_clazz();
-    return new $class($importtype, $feed_url);
+    return new $class($feed);
   }
 
   public function get_importtypes()
