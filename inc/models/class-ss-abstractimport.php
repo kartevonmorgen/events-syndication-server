@@ -152,7 +152,8 @@ abstract class SSAbstractImport
       // Do not import events from the past
       if(strtotime($eiEvent->get_start_date()) < $now)
       {
-        $logger->add_line('Event is too old, no update');
+        $logger->add_line('Event is too old (' .
+          $eiEvent->get_start_date() . '), no update');
         continue;
       }
 
@@ -410,15 +411,16 @@ abstract class SSAbstractImport
   
   public function add_backlink($eiEvent)
   {
-    if(empty($eiEvent->get_link()))
+    $backlink = $eiEvent->get_link();
+    if(empty($backlink))
     {
-      return;
+      $backlink = $this->get_feed_url();
     }
     $backlink_html = '<p>Importiert von ';
     $backlink_html .= '<a href="';
-    $backlink_html .= $eiEvent->get_link();
+    $backlink_html .= $backlink;
     $backlink_html .= '">';
-    $backlink_html .= $eiEvent->get_link();
+    $backlink_html .= $backlink;
     $backlink_html .= '</a></p>';
     $eiEvent->set_description(
       $eiEvent->get_description() . $backlink_html);

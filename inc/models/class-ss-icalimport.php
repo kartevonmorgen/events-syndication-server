@@ -251,16 +251,24 @@ class VEvent
     switch ($key) 
     {
       case 'DTSTART':
-        $eiEvent->set_start_date($this->iCalDateToUnixTimestamp($value));
+        $eiEvent->set_start_date($this->iCalDateTimeToUnixTimestamp($value));
+        break;
+      case 'DTSTART;VALUE=DATE':
+        $eiEvent->set_start_date($this->iCalDateTimeToUnixTimestamp($value . 'T000000Z'));
+        $eiEvent->set_all_day(true);
         break;
       case 'DTEND':
-        $eiEvent->set_end_date($this->iCalDateToUnixTimestamp($value));
+        $eiEvent->set_end_date($this->iCalDateTimeToUnixTimestamp($value));
+        break;
+      case 'DTEND;VALUE=DATE':
+        $eiEvent->set_end_date($this->iCalDateTimeToUnixTimestamp($value . 'T000000Z'));
+        $eiEvent->set_all_day(true);
         break;
       case 'LAST_MODIFIED':
-        $eiEvent->set_updated_date($this->iCalDateToUnixTimestamp($value));
+        $eiEvent->set_updated_date($this->iCalDateTimeToUnixTimestamp($value));
         break;
       case 'CREATED':
-        $eiEvent->set_published_date($this->iCalDateToUnixTimestamp($value));
+        $eiEvent->set_published_date($this->iCalDateTimeToUnixTimestamp($value));
         break;
       case 'UID':
         $eiEvent->set_uid($value);
@@ -309,7 +317,7 @@ class VEvent
    *
    * @return {int} 
    */ 
-  public function iCalDateToUnixTimestamp($icalDate) 
+  public function iCalDateTimeToUnixTimestamp($icalDate) 
   { 
     $icalDate = str_replace('T', '', $icalDate); 
     $icalDate = str_replace('Z', '', $icalDate); 
