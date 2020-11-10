@@ -11,6 +11,22 @@
 class SSICalImport extends SSAbstractImport
 {
   private $vCalendars = null;
+  private $_ical_lines_data;
+
+  public function get_ical_lines_data()
+  {
+    if( !empty( $this->_ical_lines_data ))
+    {
+      return $this->_ical_lines_data;
+    }
+
+    $data = $this->get_raw_data();
+    $data = str_replace("\r\n ","",$data);
+
+    $this->_ical_lines_data = explode(PHP_EOL, 
+                                      $data);
+    return $this->_ical_lines_data;
+  }
 
 	/**
 	 * Simple test to check if the URL targets to an existing file.
@@ -78,7 +94,7 @@ class SSICalImport extends SSAbstractImport
 
     $vCals = array();
     $vCal = null;
-    foreach($this->get_lines_data() as $line)
+    foreach($this->get_ical_lines_data() as $line)
     {
       if ($this->is_element($line, 'BEGIN:VCALENDAR'))
       {
@@ -259,11 +275,27 @@ class VEvent
         $eiEvent->set_link($value);
         break;
       case 'LOCATION':
-        $wpLocH = new WPLocationHelper();
-        $loc = $wpLocH->create_from_free_text_format($value);
-        if($wpLocH->is_valid($loc))
+        $length = strlen( 'http' );
+        if (substr( $value, 0, $length ) === 'http')
         {
-          $eiEvent->set_location($loc);
+          // For the Heinrich Boll Stiftung gab es
+          // Online Veranstaltungen wo bei LOCATION
+          // der Link eingegeben war, wir erlauben
+          // das zu übernehmen wenn der noch nicht durch
+          // URL eingegeben ist.
+          if(empty($eiEvent->get_link()))
+          {
+            $eiEvent->set_link($value);
+          }
+        }
+        else
+        {
+          $wpLocH = new WPLocationHelper();
+          $loc = $wpLocH->create_from_free_text_format($value);
+          if($wpLocH->is_valid($loc))
+          {
+            $eiEvent->set_location($loc);
+          }
         }
         break;
     }

@@ -73,7 +73,9 @@ class SSFeeds
     $ui_metabox = new UIMetabox('ssfeed_metabox',
                                 'Feed Details',
                                 'ssfeed');
-    $ui_metabox->add_textfield('ss_feedurl', 'Feed URL');
+    $field = $ui_metabox->add_textfield('ss_feedurl', 
+                                        'Feed URL');
+//    $field->set_escape_html(false);
     $field = $ui_metabox->add_dropdownfield(
                             'ss_feedurltype',
                             'Feed URL Type');
@@ -87,6 +89,8 @@ class SSFeeds
     }
     $ui_metabox->add_checkbox('ss_feedupdatedaily', 
                               'Update daily');
+    $ui_metabox->add_checkbox('ss_disable_linkurl_valid_check', 
+                              'Disable linkurl check');
     $ui_metabox->register();
 
     // Feed Info's

@@ -20,7 +20,6 @@ abstract class SSAbstractImport
   private $_error;
 
   private $_raw_data;
-  private $_lines_data;
   private $_xml_data;
 
 	function __construct($feed)
@@ -50,6 +49,12 @@ abstract class SSAbstractImport
   public function get_feed_url()
   {
     return $this->get_feed_meta('ss_feedurl');
+  }
+
+  public function is_linkurl_valid_check_disabled()
+  {
+    return $this->get_feed_meta(
+      'ss_disable_linkurl_valid_check');
   }
 
   public function get_owner_user_id()
@@ -151,12 +156,19 @@ abstract class SSAbstractImport
         continue;
       }
 
-      // Checks if the feed_url has the same host
-      // as the events url/link
-      if( !$this->is_linkurl_valid( $eiEvent ))
+      if( !$this->is_linkurl_valid_check_disabled() )
       {
-        $logger->add_line('the feed_url is invalid');
-        continue;
+        // Checks if the feed_url has the same host
+        // as the events url/link
+        if( !$this->is_linkurl_valid( $eiEvent ))
+        {
+          $logger->add_line('the linkurl (' . 
+                            $eiEvent->get_link() . ') ' .
+                            'does not orginate to the ' .
+                            'feedurl ('. 
+                            $this->get_feed_url() . ')');
+          continue;
+        }
       }
 
       if( $this->is_backlink_enabled())
@@ -334,7 +346,7 @@ abstract class SSAbstractImport
     }
     else
     {
-      $this->set_error("GetRawData Error: An error occure while trying to read the ESS file from the URL (" . 
+      $this->set_error("GetRawData Error: An error occure while trying to read the feed from the URL (" . 
         $this->get_feed_url() . "): " .
         $resp->getReasonPhrase());
     }
@@ -342,16 +354,6 @@ abstract class SSAbstractImport
     return $this->_raw_data;
   }
 
-  public function get_lines_data()
-  {
-    if( !empty( $this->_lines_data ))
-    {
-      return $this->_lines_data;
-    }
-
-    $this->_lines_data = explode(PHP_EOL, $this->get_raw_data());
-    return $this->_lines_data;
-  }
 
 
   public function get_xml_data()
@@ -408,6 +410,10 @@ abstract class SSAbstractImport
   
   public function add_backlink($eiEvent)
   {
+    if(empty($eiEvent->get_link()))
+    {
+      return;
+    }
     $backlink_html = '<p>Importiert von ';
     $backlink_html .= '<a href="';
     $backlink_html .= $eiEvent->get_link();
