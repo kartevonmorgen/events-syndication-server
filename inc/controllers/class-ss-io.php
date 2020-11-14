@@ -8,7 +8,7 @@
   * @license   	GNU/GPLv2, see http://www.gnu.org/licenses/gpl-2.0.html
   * @link		https://github.com/kartevonmorgen/
   */
-final class SS_IO
+final class SS_IO extends WPPluginStarter
 {
 	const EM_ESS_ARGUMENT 	= 'em_ess';
 
@@ -46,69 +46,6 @@ final class SS_IO
                 array( $this,	'get_query_vars'));
 	}
 
-	public function set_activation()
-	{
-		flush_rewrite_rules();
-
-		if ( !current_user_can( 'activate_plugins' ) ) 
-    {
-      return;
-    }
-
-    $plugin = isset( $_REQUEST[ 'plugin' ] ) ? $_REQUEST[ 'plugin' ] : EventsSyndicationServer::NAME;
-    check_admin_referer( "activate-plugin_{$plugin}" );
-
-    $role = get_role( 'administrator' );
-    $role->add_cap( 'manage_event_feeds');
-    $role->add_cap( 'manage_other_event_feeds');
-    $role = get_role( 'editor' );
-    $role->add_cap( 'manage_event_feeds');
-    $role = get_role( 'author' );
-    $role->add_cap( 'manage_event_feeds');
-
-    // -- Set Schedule Hook (CRON tasks)
-    if (!wp_next_scheduled ( SS_IO::CRON_EVENT_HOOK )) 
-    {
-      //daily | hourly | tenminutely
-		  wp_schedule_event( time(), 'daily', 
-        SS_IO::CRON_EVENT_HOOK ); 
-    }
-	}
-
-	public function set_deactivation()
-	{
-		if ( !current_user_can( 'activate_plugins' ) ) 
-    {
-      return;
-    }
-
-    $plugin = isset( $_REQUEST[ 'plugin' ] ) ? $_REQUEST[ 'plugin' ] : EventsSyndicationServer::NAME;
-    check_admin_referer( "deactivate-plugin_{$plugin}" );
-
-		// -- Remove Schedule Hook (CRON tasks)
-		wp_clear_scheduled_hook( SS_IO::CRON_EVENT_HOOK );
-	}
-
-	public function set_uninstall()
-  {
-    if ( ! current_user_can( 'activate_plugins' ) ) 
-    {
-      return;
-    }
-
-    check_admin_referer( 'bulk-plugins' );
-
-		// -- Remove Schedule Hook (CRON tasks)
-		wp_clear_scheduled_hook( SS_IO::CRON_EVENT_HOOK );
-
-		// Important: 
-    //   Check if the file is the one that was registered 
-    //   during the uninstall hook.
-    if ( __FILE__ != WP_UNINSTALL_PLUGIN ) 
-    {
-      return;
-    }
-  }
 
 	public function get_rewrite_rules_array( $rules )
 	{

@@ -1,18 +1,30 @@
 <?php
 
-
-class SSFeeds 
-{
+class SSFeeds extends WPPluginStarter
+{ 
   private static $instance = null;
 
   private function __construct() 
   {
   }
+  
+  /** 
+   * The object is created from within the class itself
+   * only if the class has no instance.
+   */
+  public static function get_instance()
+  {
+    if (self::$instance == null)
+    {
+      self::$instance = new SSFeeds();
+    }
+    return self::$instance;
+  }
 
   public function start()
   {
-    add_action('init', 
-               array($this,'create_post_type'));
+    $this->create_post_type();
+
     add_action('manage_ssfeed_posts_columns',
                array($this,'columns'),10,2);
     add_action('manage_ssfeed_posts_custom_column',
@@ -27,12 +39,9 @@ class SSFeeds
                array($this, 'join'),10,1);
     add_filter('posts_orderby',
                array($this, 'set_default_sort'),20,2);
-
-
-
   }
 
-  public function create_post_type() 
+  private function create_post_type() 
   {
     $labels = array(
       'name'               => 'Event Feeds',
@@ -116,19 +125,6 @@ class SSFeeds
     $ui_metabox->register();
 
     register_post_type( 'ssfeed', $args );  
-  }
-
-  /** 
-   * The object is created from within the class itself
-   * only if the class has no instance.
-   */
-  public static function get_instance()
-  {
-    if (self::$instance == null)
-    {
-      self::$instance = new SSFeeds();
-    }
-    return self::$instance;
   }
 
   function columns($columns) 

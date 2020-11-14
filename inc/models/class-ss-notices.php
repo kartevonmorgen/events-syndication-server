@@ -9,7 +9,7 @@
   * @license   	GNU/GPLv2, see http://www.gnu.org/licenses/gpl-2.0.html
   * @link		    https://github.com/kartevonmorgen/ 
   */ 
-final class SSNotices
+final class SSNotices extends WPPluginStarter
 {
   private static $instance = null;
 

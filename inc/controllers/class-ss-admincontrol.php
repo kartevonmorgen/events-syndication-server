@@ -7,27 +7,8 @@
   * @copyright 	No Copyright.
   * @license   	GNU/GPLv2, see https://www.gnu.org/licenses/gpl-2.0.html
   */
-class SSAdminControl 
+class SSAdminControl extends WPPluginStarter
 {
-  private static $instance = null;
-
-  private function __construct() 
-  {
-  }
-
-  /** 
-   * The object is created from within the class itself
-   * only if the class has no instance.
-   */
-  public static function get_instance()
-  {
-    if (self::$instance == null)
-    {
-      self::$instance = new SSAdminControl();
-    }
-    return self::$instance;
-  }
-
   public function start() 
   {
     $this->set_default_values();
