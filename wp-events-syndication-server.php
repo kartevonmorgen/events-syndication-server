@@ -75,6 +75,7 @@ class WPEventsSyndicationServerPluginLoader
 {
   public function init()
   {
+    $this->add_dependency('wp-libraries/wp-libraries.php');
     $this->add_dependency('wp-events-interface/wp-events-interface.php');
 
     $this->add_include('/inc/models/class-ss-importtype.php');
