@@ -1,8 +1,8 @@
-# Events Syndication Server
+# WP Events Syndication Server
 
 This Wordpress Plugin loads events from a Feed into the currently selected Events Calendar in Wordpress.
 
-This Wordpress Plugin depends on the ["Events Interface"](https://github.com/kartevonmorgen/events-interface) Wordpress Plugin. Before this plugin can be installed the "Events Interface" Plugin should be installed und activated.
+This Wordpress Plugin depends on the ["WP Events Interface"](https://github.com/kartevonmorgen/wp-events-interface) Wordpress Plugin. Before this plugin can be installed the "WP Events Interface" Plugin should be installed und activated.
 
 ### Supported Feeds:
 
@@ -16,4 +16,5 @@ On Youtube: https://www.youtube.com/watch?v=OGi0U3Eqs6E
 
 
 #### iCal Feed 
-Under Construction
+ICal Feeds are also supported.
+
