@@ -44,16 +44,16 @@ class SSFeeds extends WPPluginStarter
   private function create_post_type() 
   {
     $labels = array(
-      'name'               => 'Event Feeds',
-      'singular_name'      => 'Event Feed',
-      'menu_name'          => 'Event Feeds',
-      'name_admin_bar'     => 'Event Feed',
-      'add_new'            => 'Add New',
-      'add_new_item'       => 'Add New Feed',
+      'name'               => 'Veranstaltung Feeds',
+      'singular_name'      => 'Veranstaltung Feed',
+      'menu_name'          => 'Veranstaltung Feeds',
+      'name_admin_bar'     => 'Veranstaltung Feed',
+      'add_new'            => 'Neu hinzufügen',
+      'add_new_item'       => 'Feed neu hinzufügen',
       'new_item'           => 'Neue Feed',
       'edit_item'          => 'Edit Feed',
       'view_item'          => 'View Feed',
-      'all_items'          => 'All Feeds',
+      'all_items'          => 'Alle Feeds',
       'search_items'       => 'Search Feeds',
       'parent_item_colon'  => 'Parent Feed',
       'not_found'          => 'No Feeds Found',
