@@ -18,6 +18,7 @@ abstract class SSAbstractImport
   private $_feed_uuid;
   private $_feed_title;
   private $_error;
+  private $_log = '';
 
   private $_raw_data;
   private $_xml_data;
@@ -434,6 +435,22 @@ abstract class SSAbstractImport
   public function get_error()
   {
     return $this->_error;
+  }
+
+  public function set_log( $log )
+  {
+    $this->_log = '['. $this->get_feed_url() . ']:' .$log;
+  }
+
+  public function add_log( $log )
+  {
+    $this->_log .= PHP_EOL;
+    $this->_log .= '['. $this->get_feed_url() . ']:' . $log;
+  }
+
+  public function get_log()
+  {
+    return $this->_log;
   }
 
   public function has_error()

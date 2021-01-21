@@ -212,7 +212,7 @@ class SSFeeds extends WPPluginStarter
     }
     else
     {
-      echo 'Import done succesfully';
+      echo 'Import done succesfully' . $importer->get_log();
     }
     echo '</br>';
   }

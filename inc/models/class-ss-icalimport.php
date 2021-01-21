@@ -111,7 +111,7 @@ class SSICalImport extends SSAbstractImport
 
       if ($this->is_element($line, 'BEGIN:VEVENT'))
       {
-        $vEvent = new VEvent();
+        $vEvent = new VEvent($this);
         continue;
       }
 
@@ -234,9 +234,11 @@ class VCalendar
 class VEvent
 {
   private $eiEvent;
+  private $importer;
 
-  function __construct()
+  function __construct($importer)
   {
+    $this->importer = $importer;
     $this->eiEvent = new EiCalendarEvent();
   }
 
@@ -245,39 +247,61 @@ class VEvent
     return $this->eiEvent;
   }
 
+  function get_importer()
+  {
+    return $this->importer;
+  }
+
+  function log($log)
+  {
+    $this->get_importer()->add_log($log);
+  }
+
   function set_value($key, $value)
   {
     $eiEvent = $this->get_ei_event();
-    switch ($key) 
+    $keys = explode(';', $key);
+    if(empty($keys))
+    {
+      return;
+    }
+
+    $firstpartofkey = reset($keys);
+    switch ($firstpartofkey) 
     {
       case 'DTSTART':
-        $eiEvent->set_start_date($this->iCalDateTimeToUnixTimestamp($value));
-        break;
-      case 'DTSTART;VALUE=DATE':
-        $eiEvent->set_start_date($this->iCalDateTimeToUnixTimestamp($value . 'T000000Z'));
-        $eiEvent->set_all_day(true);
+        $vEventDate = new VEventDate($this->get_importer(), $key, $value);
+        $vEventDate->parse();
+        $eiEvent->set_start_date($vEventDate->getTimestamp());
+        $eiEvent->set_all_day($vEventDate->isDate());
         break;
       case 'DTEND':
-        $eiEvent->set_end_date($this->iCalDateTimeToUnixTimestamp($value));
-        break;
-      case 'DTEND;VALUE=DATE':
-        $eiEvent->set_end_date($this->iCalDateTimeToUnixTimestamp($value . 'T000000Z'));
-        $eiEvent->set_all_day(true);
+        $vEventDate = new VEventDate($this->get_importer(), $key, $value);
+        $vEventDate->parse();
+        $eiEvent->set_end_date($vEventDate->getTimestamp());
+        $eiEvent->set_all_day($vEventDate->isDate());
         break;
       case 'LAST_MODIFIED':
-        $eiEvent->set_updated_date($this->iCalDateTimeToUnixTimestamp($value));
+        $vEventDate = new VEventDate($this->get_importer(), $key, $value);
+        $vEventDate->parse();
+        $eiEvent->set_updated_date($vEventDate->getTimestamp());
         break;
       case 'CREATED':
-        $eiEvent->set_published_date($this->iCalDateTimeToUnixTimestamp($value));
+        $vEventDate = new VEventDate($this->get_importer(), $key, $value);
+        $vEventDate->parse();
+        $eiEvent->set_published_date($vEventDate->getTimestamp());
         break;
       case 'UID':
+        //$this->log( 'UID ' . $value );
         $eiEvent->set_uid($value);
         break;
       case 'SUMMARY':
         $eiEvent->set_title($value);
         break;
       case 'DESCRIPTION':
-        $eiEvent->set_description($value);
+        $text = new VEventText($this->get_importer(), $value);
+        $text->parse();
+        $eiEvent->set_description($text->getResult());
         break;
       case 'URL':
         $eiEvent->set_link($value);
@@ -307,6 +331,85 @@ class VEvent
         }
         break;
     }
+  }
+
+}
+
+class VEventDate
+{
+  private $dateString;
+  private $isDate;
+  private $timestamp;
+  private $importer;
+
+  public function __construct($importer, $key, $dateStr)
+  {
+    $this->importer = $importer;
+    $this->key = $key;
+    $this->dateString = $dateStr;
+  }
+
+  public function get_importer()
+  {
+    return $this->importer;
+  }
+
+  public function log($log)
+  {
+    $this->get_importer()->add_log($log);
+  }
+
+  public function getKey()
+  {
+    return $this->key;
+  }
+
+  public function getDateString()
+  {
+    return $this->dateString;
+  }
+
+  private function setTimestamp($timestamp)
+  {
+    $this->timestamp = $timestamp;
+  }
+
+  public function getTimestamp()
+  {
+    return $this->timestamp;
+  }
+
+  private function setDate($isDate)
+  {
+    $this->isDate = $isDate;
+  }
+
+  public function isDate()
+  {
+    return $this->isDate;
+  }
+
+  public function parse()
+  {
+    $key = $this->getKey();
+    $value = $this->getDateString();
+
+    if(strpos($key, 'VALUE=DATE-TIME') !== false)
+    {
+      $this->setDate(false);
+    }
+    else if(strpos($key, 'VALUE=DATE') !== false)
+    {
+      $value = $value . 'T000000Z';
+      $this->setDate(true);
+    }
+    else
+    {
+      $this->setDate(false);
+    }
+
+    $ts = $this->iCalDateTimeToUnixTimestamp($value);
+    $this->setTimestamp($ts);
   }
 
   /** 
@@ -345,4 +448,48 @@ class VEvent
                         (int)$date[1]);
     return  $timestamp;
   } 
+
 }
+
+class VEventText
+{
+  private $importer;
+  private $value;
+  private $result;
+
+  public function __construct($importer, $value)
+  {
+    $this->importer = $importer;
+    $this->value = $value;
+  }
+
+  private function getValue()
+  {
+    return $this->value;
+  }
+
+  private function get_importer()
+  {
+    return $this->importer;
+  }
+
+  private function setResult($result)
+  {
+    $this->result = $result;
+  }
+
+  public function getResult()
+  {
+    return $this->result;
+  }
+
+  public function parse()
+  {
+    $value = $this->getValue();
+    $value = str_replace("\\n", "<br>", $value);
+    $this->setResult($value);
+  }
+
+
+}
+
