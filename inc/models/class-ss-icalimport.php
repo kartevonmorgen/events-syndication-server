@@ -15,6 +15,8 @@ class SSICalImport extends SSAbstractImport
 
   public function get_ical_lines_data()
   {
+    $stringUtil = new PHPStringUtil();
+
     if( !empty( $this->_ical_lines_data ))
     {
       return $this->_ical_lines_data;
@@ -22,9 +24,19 @@ class SSICalImport extends SSAbstractImport
 
     $data = $this->get_raw_data();
     $data = str_replace("\r\n ","",$data);
+    
+    $linesdata2 = array();
+    $linesdata = explode(PHP_EOL, $data);
+    foreach($linesdata as $linedata)
+    {
+      if($stringUtil->endsWith($linedata, "\r"))
+      {
+        $linedata = substr($linedata, 0, -1);
+      }
+      array_push($linesdata2, $linedata);
+    }
 
-    $this->_ical_lines_data = explode(PHP_EOL, 
-                                      $data);
+    $this->_ical_lines_data = $linesdata2;
     return $this->_ical_lines_data;
   }
 
@@ -155,7 +167,8 @@ class SSICalImport extends SSAbstractImport
   private function get_value($line)
   {
     $value = strstr($line, ':'); 
-    return substr($value, 1);
+    $value = substr($value, 1);
+    return $value;
   }
 }
 
@@ -293,10 +306,13 @@ class VEvent
         break;
       case 'UID':
         //$this->log( 'UID ' . $value );
-        $eiEvent->set_uid($value);
+        $eiEvent->set_uid(sanitize_title($value));
+        $eiEvent->set_slug(sanitize_title($value));
         break;
       case 'SUMMARY':
-        $eiEvent->set_title($value);
+        $text = new VEventText($this->get_importer(), $value);
+        $text->parse();
+        $eiEvent->set_title($text->getResult());
         break;
       case 'DESCRIPTION':
         $text = new VEventText($this->get_importer(), $value);
@@ -486,6 +502,11 @@ class VEventText
   public function parse()
   {
     $value = $this->getValue();
+
+    // Remove the "\," because it is removed by wordpress and then we always get trouble with comparing
+    $value = str_replace("\,", ",", $value);
+
+    // Replace \n to <br> for a good html view
     $value = str_replace("\\n", "<br>", $value);
     $this->setResult($value);
   }
