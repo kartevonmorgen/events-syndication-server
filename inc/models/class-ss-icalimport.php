@@ -88,10 +88,10 @@ class SSICalImport extends SSAbstractImport implements ICalLogger
       $index = 0;
       if($vEvent->is_recurring())
       {
-        $this->add_log('STARTDATE: ' . date("Y-m-d | h:i:sa", $vEvent->get_dt_startdate()));
+        //$this->add_log('STARTDATE: ' . date("Y-m-d | h:i:sa", $vEvent->get_dt_startdate()));
         foreach( $vEvent->get_recurring_dates() as $date )
         {
-          $this->add_log('RDATE: ' . date("Y-m-d | h:i:sa", $date));
+          //$this->add_log('RDATE: ' . date("Y-m-d | h:i:sa", $date));
           array_push($eiEvents, $this->read_event($vEvent, $date, $index));
           $index = $index + 1;
         }
