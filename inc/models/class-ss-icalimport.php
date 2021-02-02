@@ -8,7 +8,7 @@
   * @license   	GNU/GPLv2, see http://www.gnu.org/licenses/gpl-2.0.html
   * @link		    https://github.com/kartevonmorgen
   */
-class SSICalImport extends SSAbstractImport
+class SSICalImport extends SSAbstractImport implements ICalLogger
 {
   private $vCalendars = null;
   private $_ical_lines_data;
@@ -23,6 +23,8 @@ class SSICalImport extends SSAbstractImport
     }
 
     $data = $this->get_raw_data();
+
+    // First remove the linebreaks in the text
     $data = str_replace("\r\n ","",$data);
     
     $linesdata2 = array();
@@ -83,9 +85,75 @@ class SSICalImport extends SSAbstractImport
     $eiEvents = array();
     foreach ( $vCal->get_events() as $vEvent )
 		{
-      array_push($eiEvents, $vEvent->get_ei_event());
+      $index = 0;
+      if($vEvent->is_recurring())
+      {
+        $this->add_log('STARTDATE: ' . date("Y-m-d | h:i:sa", $vEvent->get_dt_startdate()));
+        foreach( $vEvent->get_recurring_dates() as $date )
+        {
+          $this->add_log('RDATE: ' . date("Y-m-d | h:i:sa", $date));
+          array_push($eiEvents, $this->read_event($vEvent, $date, $index));
+          $index = $index + 1;
+        }
+      }
+      else
+      {
+        array_push($eiEvents, $this->read_event($vEvent, $vEvent->get_dt_startdate(), $index));
+      }
     }
     return $eiEvents;
+  }
+
+  private function read_event($vEvent, $startdate, $index)
+  {
+    $eiEvent = new EiCalendarEvent();
+
+    $uid = $vEvent->get_uid();
+    if($index > 0 )
+    {
+      $uid = $uid . '__' . $index;
+    }
+    $enddate = $startdate + ($vEvent->get_dt_enddate() - $vEvent->get_dt_startdate());
+    $eiEvent->set_uid(sanitize_title($uid));
+    $eiEvent->set_slug(sanitize_title($uid));
+    $eiEvent->set_title($vEvent->get_summary());
+    $eiEvent->set_description($vEvent->get_description());
+    $eiEvent->set_link($vEvent->get_url());
+
+    $eiEvent->set_start_date($startdate);
+    $eiEvent->set_end_date($enddate);
+    $eiEvent->set_all_day($vEvent->is_dt_allday());
+
+    $eiEvent->set_published_date($vEvent->get_created());
+    $eiEvent->set_updated_date($vEvent->get_lastmodified());
+
+    $location = $vEvent->get_location();
+    $length = strlen( 'http' );
+    if (substr( $location, 0, $length ) === 'http')
+    {
+      // For the Heinrich Boll Stiftung gab es
+      // Online Veranstaltungen wo bei LOCATION
+      // der Link eingegeben war, wir erlauben
+      // das zu übernehmen wenn der noch nicht durch
+      // URL eingegeben ist.
+      if(empty($eiEvent->get_link()))
+      {
+        $eiEvent->set_link($location);
+      }
+    }
+    else
+    {
+      $wpLocH = new WPLocationHelper();
+      $loc = $wpLocH->create_from_free_text_format($location);
+      if($wpLocH->is_valid($loc))
+      {
+        $eiEvent->set_location($loc);
+      }
+    }
+
+    $eiEvent->set_contact_name($vEvent->get_organizer_name());
+    $eiEvent->set_contact_email($vEvent->get_organizer_email());
+    return $eiEvent;
   }
 
   private function get_vcalendar()
@@ -110,7 +178,7 @@ class SSICalImport extends SSAbstractImport
     {
       if ($this->is_element($line, 'BEGIN:VCALENDAR'))
       {
-        $vCal = new VCalendar();
+        $vCal = new ICalVCalendar($this);
         continue;
       }
 
@@ -123,7 +191,7 @@ class SSICalImport extends SSAbstractImport
 
       if ($this->is_element($line, 'BEGIN:VEVENT'))
       {
-        $vEvent = new VEvent($this);
+        $vEvent = new ICalVEvent($this);
         continue;
       }
 
@@ -141,13 +209,13 @@ class SSICalImport extends SSAbstractImport
 
       if(empty($vEvent))
       {
-        $vCal->set_value($this->get_key($line), 
-                         $this->get_value($line));
+        $vCal->parse_value($this->get_key($line), 
+                           $this->get_value($line));
         continue;
       }
 
-      $vEvent->set_value( $this->get_key($line), 
-                          $this->get_value($line));
+      $vEvent->parse_value( $this->get_key($line), 
+                            $this->get_value($line));
     }
 
     $this->vCalendars = $vCals;
@@ -172,345 +240,5 @@ class SSICalImport extends SSAbstractImport
   }
 }
 
-class VCalendar
-{
-  private $vEvents;
-  private $link;
-  private $name;
-  private $prodid;
-  
-  function __construct()
-  {
-    $this->vEvents = array();
-    $this->prodid = null;
-    $this->name = null;
-    $this->link = null;
-  }
 
-  function set_value($key, $value)
-  {
-    switch ($key) 
-    {
-      case 'X-ORGINAL_URL':
-        $this->set_link($value);
-        break;
-      case 'X-WR-CALNAME':
-        $this->set_name($value);
-        break;
-      case 'PRODID':
-        $this->set_prodid($value);
-        break;
-    }
-  }
-
-  function add_event($vEvent)
-  {
-    array_push($this->vEvents, $vEvent);
-  }
-
-  function get_events()
-  {
-    return $this->vEvents;
-  }
-
-  function set_name($name)
-  {
-    $this->name = $name;
-  }
-
-  function get_name()
-  {
-    return $this->name;
-  }
-
-  function set_link($link)
-  {
-    $this->link = $link;
-  }
-
-  function get_link()
-  {
-    return $this->link;
-  }
-
-  function set_prodid($prodid)
-  {
-    $this->prodid = $prodid;
-  }
-
-  function get_prodid()
-  {
-    return $this->prodid;
-  }
-}
-
-class VEvent
-{
-  private $eiEvent;
-  private $importer;
-
-  function __construct($importer)
-  {
-    $this->importer = $importer;
-    $this->eiEvent = new EiCalendarEvent();
-  }
-
-  function get_ei_event()
-  {
-    return $this->eiEvent;
-  }
-
-  function get_importer()
-  {
-    return $this->importer;
-  }
-
-  function log($log)
-  {
-    $this->get_importer()->add_log($log);
-  }
-
-  function set_value($key, $value)
-  {
-    $eiEvent = $this->get_ei_event();
-    $keys = explode(';', $key);
-    if(empty($keys))
-    {
-      return;
-    }
-
-    $firstpartofkey = reset($keys);
-    switch ($firstpartofkey) 
-    {
-      case 'DTSTART':
-        $vEventDate = new VEventDate($this->get_importer(), $key, $value);
-        $vEventDate->parse();
-        $eiEvent->set_start_date($vEventDate->getTimestamp());
-        $eiEvent->set_all_day($vEventDate->isDate());
-        break;
-      case 'DTEND':
-        $vEventDate = new VEventDate($this->get_importer(), $key, $value);
-        $vEventDate->parse();
-        $eiEvent->set_end_date($vEventDate->getTimestamp());
-        $eiEvent->set_all_day($vEventDate->isDate());
-        break;
-      case 'LAST_MODIFIED':
-        $vEventDate = new VEventDate($this->get_importer(), $key, $value);
-        $vEventDate->parse();
-        $eiEvent->set_updated_date($vEventDate->getTimestamp());
-        break;
-      case 'CREATED':
-        $vEventDate = new VEventDate($this->get_importer(), $key, $value);
-        $vEventDate->parse();
-        $eiEvent->set_published_date($vEventDate->getTimestamp());
-        break;
-      case 'UID':
-        //$this->log( 'UID ' . $value );
-        $eiEvent->set_uid(sanitize_title($value));
-        $eiEvent->set_slug(sanitize_title($value));
-        break;
-      case 'SUMMARY':
-        $text = new VEventText($this->get_importer(), $value);
-        $text->parse();
-        $eiEvent->set_title($text->getResult());
-        break;
-      case 'DESCRIPTION':
-        $text = new VEventText($this->get_importer(), $value);
-        $text->parse();
-        $eiEvent->set_description($text->getResult());
-        break;
-      case 'URL':
-        $eiEvent->set_link($value);
-        break;
-      case 'LOCATION':
-        $length = strlen( 'http' );
-        if (substr( $value, 0, $length ) === 'http')
-        {
-          // For the Heinrich Boll Stiftung gab es
-          // Online Veranstaltungen wo bei LOCATION
-          // der Link eingegeben war, wir erlauben
-          // das zu übernehmen wenn der noch nicht durch
-          // URL eingegeben ist.
-          if(empty($eiEvent->get_link()))
-          {
-            $eiEvent->set_link($value);
-          }
-        }
-        else
-        {
-          $wpLocH = new WPLocationHelper();
-          $loc = $wpLocH->create_from_free_text_format($value);
-          if($wpLocH->is_valid($loc))
-          {
-            $eiEvent->set_location($loc);
-          }
-        }
-        break;
-    }
-  }
-
-}
-
-class VEventDate
-{
-  private $dateString;
-  private $isDate;
-  private $timestamp;
-  private $importer;
-
-  public function __construct($importer, $key, $dateStr)
-  {
-    $this->importer = $importer;
-    $this->key = $key;
-    $this->dateString = $dateStr;
-  }
-
-  public function get_importer()
-  {
-    return $this->importer;
-  }
-
-  public function log($log)
-  {
-    $this->get_importer()->add_log($log);
-  }
-
-  public function getKey()
-  {
-    return $this->key;
-  }
-
-  public function getDateString()
-  {
-    return $this->dateString;
-  }
-
-  private function setTimestamp($timestamp)
-  {
-    $this->timestamp = $timestamp;
-  }
-
-  public function getTimestamp()
-  {
-    return $this->timestamp;
-  }
-
-  private function setDate($isDate)
-  {
-    $this->isDate = $isDate;
-  }
-
-  public function isDate()
-  {
-    return $this->isDate;
-  }
-
-  public function parse()
-  {
-    $key = $this->getKey();
-    $value = $this->getDateString();
-
-    if(strpos($key, 'VALUE=DATE-TIME') !== false)
-    {
-      $this->setDate(false);
-    }
-    else if(strpos($key, 'VALUE=DATE') !== false)
-    {
-      $value = $value . 'T000000Z';
-      $this->setDate(true);
-    }
-    else
-    {
-      $this->setDate(false);
-    }
-
-    $ts = $this->iCalDateTimeToUnixTimestamp($value);
-    $this->setTimestamp($ts);
-  }
-
-  /** 
-   * Return Unix timestamp from ical date time format 
-   * 
-   * @param {string} $icalDate A Date in the format YYYYMMDD[T]HHMMSS[Z] or
-   *                           YYYYMMDD[T]HHMMSS
-   *
-   * @return {int} 
-   */ 
-  public function iCalDateTimeToUnixTimestamp($icalDate) 
-  { 
-    $icalDate = str_replace('T', '', $icalDate); 
-    $icalDate = str_replace('Z', '', $icalDate); 
-
-    $pattern  = '/([0-9]{4})';   // 1: YYYY
-    $pattern .= '([0-9]{2})';    // 2: MM
-    $pattern .= '([0-9]{2})';    // 3: DD
-    $pattern .= '([0-9]{0,2})';  // 4: HH
-    $pattern .= '([0-9]{0,2})';  // 5: MM
-    $pattern .= '([0-9]{0,2})/'; // 6: SS
-    preg_match($pattern, $icalDate, $date); 
-
-    // Unix timestamp can't represent dates before 1970
-    if ($date[1] <= 1970) 
-    {
-      return false;
-    } 
-    // Unix timestamps after 03:14:07 UTC 2038-01-19 might cause an overflow
-    // if 32 bit integers are used.
-    $timestamp = mktime((int)$date[4], 
-                        (int)$date[5], 
-                        (int)$date[6], 
-                        (int)$date[2],
-                        (int)$date[3], 
-                        (int)$date[1]);
-    return  $timestamp;
-  } 
-
-}
-
-class VEventText
-{
-  private $importer;
-  private $value;
-  private $result;
-
-  public function __construct($importer, $value)
-  {
-    $this->importer = $importer;
-    $this->value = $value;
-  }
-
-  private function getValue()
-  {
-    return $this->value;
-  }
-
-  private function get_importer()
-  {
-    return $this->importer;
-  }
-
-  private function setResult($result)
-  {
-    $this->result = $result;
-  }
-
-  public function getResult()
-  {
-    return $this->result;
-  }
-
-  public function parse()
-  {
-    $value = $this->getValue();
-
-    // Remove the "\," because it is removed by wordpress and then we always get trouble with comparing
-    $value = str_replace("\,", ",", $value);
-
-    // Replace \n to <br> for a good html view
-    $value = str_replace("\\n", "<br>", $value);
-    $this->setResult($value);
-  }
-
-
-}
 
