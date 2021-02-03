@@ -32,46 +32,9 @@ class SSESSImport extends SSAbstractImport
 		}
 		else
 		{
-      $io = SS_IO::get_instance();
-      
-      // TODO: Find out how to be undepend from robby.ia
-			$response = json_decode( $io->get_curl_result( 
-        'https://www.robby.ai/api/v1/ess/validator.json', 
-        $feed_url ), 
-        TRUE );
-
-			//dd( $response );
-
-			if ( $response !== FALSE )
-			{
-				$r = @$response[ 'result' ];
-
-				//dd( $r );
-
-				if ( @isset( $r[ 'result' ] ) )
-				{
-					if ( strlen( @$r['result']['error'] ) > 1 || @$r['type'] == 'KO' )
-					{
-						//d( strlen( @$r['result']['error'] ) );
-
-						if ( $response['result']['error'] == NULL )
-							$response['result']['error'] = array();
-
-						array_unshift( 	$response['result']['error'], "<b>" . sprintf( __( "The Feed URL is not a valide ESS file: <a href='%s' target='_blank'>%s</a>", 'em-ess' ), $feed_url, $feed_url ) . "</b><br>" );
-						array_push( 	$response['result']['error'], "<b>" . sprintf( __( "More information about the standard: <a href='%s' target='_blank'>%s</a>", 'em-ess' ), SS_IO::ESS_WEBSITE, SS_IO::ESS_WEBSITE ). "</b><br>" );
-
-						//dd( $r );
-
-						$this->set_error( $response );
-
-            return FALSE;
-					}
-				}
-        $this->_isFeedValid = TRUE;
-				return TRUE;
-			}
+      $this->_isFeedValid = TRUE;
+		  return TRUE;
 		}
-		return FALSE;
 	}
 
   public function read_feed_uuid()

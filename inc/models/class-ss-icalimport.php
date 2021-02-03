@@ -207,15 +207,16 @@ class SSICalImport extends SSAbstractImport implements ICalLogger
         continue;
       }
 
+      $vLine = new ICalVLine($this, $line);
+      $vLine->parse();
+
       if(empty($vEvent))
       {
-        $vCal->parse_value($this->get_key($line), 
-                           $this->get_value($line));
+        $vCal->processLine($vLine); 
         continue;
       }
 
-      $vEvent->parse_value( $this->get_key($line), 
-                            $this->get_value($line));
+      $vEvent->processLine($vLine); 
     }
 
     $this->vCalendars = $vCals;
@@ -225,18 +226,6 @@ class SSICalImport extends SSAbstractImport implements ICalLogger
   private function is_element($line, $element)
   {
     return stristr($line, $element) !== false;
-  }
-
-  private function get_key($line)
-  {
-    return strstr($line, ':', true);
-  }
-
-  private function get_value($line)
-  {
-    $value = strstr($line, ':'); 
-    $value = substr($value, 1);
-    return $value;
   }
 }
 
