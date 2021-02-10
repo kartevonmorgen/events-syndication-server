@@ -87,7 +87,6 @@ class SSICalImport extends SSAbstractImport implements ICalLogger
     $eiEvents = array();
     foreach ( $vCal->get_events() as $vEvent )
 		{
-      $index = 0;
       //$this->add_log('SUM: ' . $vEvent->get_summary() . '<br>');
       if($vEvent->is_recurring())
       {
@@ -100,7 +99,6 @@ class SSICalImport extends SSAbstractImport implements ICalLogger
         $index_added = 0;
         foreach( $vEvent->get_recurring_dates() as $date )
         {
-          $index = $index + 1;
           if($index_added >= $this->get_max_recurring_count())
           {
             continue;
@@ -108,9 +106,13 @@ class SSICalImport extends SSAbstractImport implements ICalLogger
 
           if($date > $now && $date < ($now + ($maxPeriodInDays * 24 * 60 * 60)))
           {
+            $slug_suffix = date('__Ymd', $date);
             $index_added = $index_added + 1;
             //$this->add_log('RDATE: ' . date("Y-m-d | h:i:sa", $date) . ' i=' .$index_added . '<br>');
-            array_push($eiEvents, $this->read_event($vEvent, $date, $index));
+            array_push($eiEvents, 
+                       $this->read_event($vEvent, 
+                                         $date, 
+                                         $slug_suffix));
           }
         }
       }
@@ -120,22 +122,23 @@ class SSICalImport extends SSAbstractImport implements ICalLogger
         if($date > $now && $date < ($now + ($maxPeriodInDays * 24 * 60 * 60)))
         {
           //$this->add_log('STARTDATE: ' . date("Y-m-d | h:i:sa", $vEvent->get_dt_startdate()) . '<br>');
-          array_push($eiEvents, $this->read_event($vEvent, $date, $index));
+          array_push($eiEvents, 
+                     $this->read_event($vEvent, $date, ''));
         }
       }
     }
     return $eiEvents;
   }
 
-  private function read_event($vEvent, $startdate, $index)
+  private function read_event($vEvent, 
+                              $startdate, 
+                              $slug_suffix)
   {
     $eiEvent = new EiCalendarEvent();
 
     $uid = $vEvent->get_uid();
-    if($index > 0 )
-    {
-      $uid = $uid . '__' . $index;
-    }
+    $uid = $uid . $slug_suffix;
+
     $enddate = $startdate + ($vEvent->get_dt_enddate() - $vEvent->get_dt_startdate());
     $eiEvent->set_uid(sanitize_title($uid));
     $eiEvent->set_slug(sanitize_title($uid));
