@@ -90,10 +90,16 @@ class SSICalImport extends SSAbstractImport implements ICalLogger
       //$this->add_log('SUM: ' . $vEvent->get_summary() . '<br>');
       if($vEvent->is_recurring())
       {
-        $recurring = new ICalVEventRecurringDate($vEvent->get_recurring_rule(),
-                                                 $vEvent->get_dt_startdate());
-        $recurring->setMaxPeriodInDays($maxPeriodInDays);
-        $vEvent->set_recurring_dates($recurring->getDates());
+        // For RECURRENCE-ID the recurring_dates 
+        // are filled directly
+        if(empty($vEvent->get_recurring_dates()))
+        {
+          $recurring = new ICalVEventRecurringDate(
+                              $vEvent->get_recurring_rule(),
+                              $vEvent->get_dt_startdate());
+          $recurring->setMaxPeriodInDays($maxPeriodInDays);
+          $vEvent->set_recurring_dates($recurring->getDates());
+        }
 
         //$this->add_log('RSTARTDATE: ' . date("Y-m-d | h:i:sa", $vEvent->get_dt_startdate()) . '<br>');
         $index_added = 0;
