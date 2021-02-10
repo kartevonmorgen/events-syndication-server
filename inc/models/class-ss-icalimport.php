@@ -80,25 +80,48 @@ class SSICalImport extends SSAbstractImport implements ICalLogger
 
   public function read_events_from_feed()
   {
+    $now = time();
+    $maxPeriodInDays = $this->get_max_periodindays();
     $vCal = $this->get_vcalendar();
 
     $eiEvents = array();
     foreach ( $vCal->get_events() as $vEvent )
 		{
       $index = 0;
+      //$this->add_log('SUM: ' . $vEvent->get_summary() . '<br>');
       if($vEvent->is_recurring())
       {
-        //$this->add_log('STARTDATE: ' . date("Y-m-d | h:i:sa", $vEvent->get_dt_startdate()));
+        $recurring = new ICalVEventRecurringDate($vEvent->get_recurring_rule(),
+                                                 $vEvent->get_dt_startdate());
+        $recurring->setMaxPeriodInDays($maxPeriodInDays);
+        $vEvent->set_recurring_dates($recurring->getDates());
+
+        //$this->add_log('RSTARTDATE: ' . date("Y-m-d | h:i:sa", $vEvent->get_dt_startdate()) . '<br>');
+        $index_added = 0;
         foreach( $vEvent->get_recurring_dates() as $date )
         {
-          //$this->add_log('RDATE: ' . date("Y-m-d | h:i:sa", $date));
-          array_push($eiEvents, $this->read_event($vEvent, $date, $index));
           $index = $index + 1;
+          if($index_added >= $this->get_max_recurring_count())
+          {
+            continue;
+          }
+
+          if($date > $now && $date < ($now + ($maxPeriodInDays * 24 * 60 * 60)))
+          {
+            $index_added = $index_added + 1;
+            //$this->add_log('RDATE: ' . date("Y-m-d | h:i:sa", $date) . ' i=' .$index_added . '<br>');
+            array_push($eiEvents, $this->read_event($vEvent, $date, $index));
+          }
         }
       }
       else
       {
-        array_push($eiEvents, $this->read_event($vEvent, $vEvent->get_dt_startdate(), $index));
+        $date = $vEvent->get_dt_startdate();
+        if($date > $now && $date < ($now + ($maxPeriodInDays * 24 * 60 * 60)))
+        {
+          //$this->add_log('STARTDATE: ' . date("Y-m-d | h:i:sa", $vEvent->get_dt_startdate()) . '<br>');
+          array_push($eiEvents, $this->read_event($vEvent, $date, $index));
+        }
       }
     }
     return $eiEvents;

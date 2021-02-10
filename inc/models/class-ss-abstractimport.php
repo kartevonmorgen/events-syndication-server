@@ -427,6 +427,16 @@ abstract class SSAbstractImport
       $eiEvent->get_description() . $backlink_html);
   }
 
+  public function get_max_recurring_count()
+  {
+    return get_option('ss_max_recurring_count', 10);
+  }
+  
+  public function get_max_periodindays()
+  {
+    return get_option('ss_max_periodindays', 356);
+  }
+
   public function set_error($error)
   {
     $this->_error = '['. $this->get_feed_url() . ']:' .$error;

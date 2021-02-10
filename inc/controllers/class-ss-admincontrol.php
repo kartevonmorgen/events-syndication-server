@@ -35,7 +35,22 @@ class SSAdminControl extends WPPluginStarter
     $field = $section->add_textarea('ss_cron_message', 
                                     'Last message eventscron');
     $field->set_description('Last message from daily cron job to retrieve events');
+
+    $section = $page->add_section('ss_section_two', 'Limits of imported events');
+    $section->set_description(
+       "This section defines the maximum of events that " . 
+       "will be imported by count and period.");
     
+    $field = $section->add_textfield('ss_max_recurring_count', 
+                                    'Max. recurring events');
+    $field->set_description('Maximum number of imported recurring events ');
+    $field->set_defaultvalue(10);
+
+    $field = $section->add_textfield('ss_max_periodindays', 
+                                    'Max. period in Days');
+    $field->set_description('Maximum period of time that will be used to import events ');
+    $field->set_defaultvalue(356);
+
     $page->register();
   }
 
