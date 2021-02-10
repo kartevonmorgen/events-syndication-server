@@ -99,21 +99,37 @@ class SSICalImport extends SSAbstractImport implements ICalLogger
         $index_added = 0;
         foreach( $vEvent->get_recurring_dates() as $date )
         {
+          // If the Feed has to many events
           if($index_added >= $this->get_max_recurring_count())
           {
             continue;
           }
 
-          if($date > $now && $date < ($now + ($maxPeriodInDays * 24 * 60 * 60)))
+          // If Event is in the past
+          if($date < $now)
           {
-            $slug_suffix = date('__Ymd', $date);
-            $index_added = $index_added + 1;
-            //$this->add_log('RDATE: ' . date("Y-m-d | h:i:sa", $date) . ' i=' .$index_added . '<br>');
-            array_push($eiEvents, 
-                       $this->read_event($vEvent, 
-                                         $date, 
-                                         $slug_suffix));
+            continue;
           }
+
+          // If Event is to far in the future
+          if($date > ($now + ($maxPeriodInDays * 24 * 60 * 60)))
+          {
+            continue;
+          }
+
+          // If the Event is explicit excluded in the feed
+          if($vEvent->is_recurring_exdate($date))
+          {
+            continue;
+          }
+          
+          $slug_suffix = date('__Ymd', $date);
+          $index_added = $index_added + 1;
+            //$this->add_log('RDATE: ' . date("Y-m-d | h:i:sa", $date) . ' i=' .$index_added . '<br>');
+          array_push($eiEvents, 
+                     $this->read_event($vEvent, 
+                                       $date, 
+                                       $slug_suffix));
         }
       }
       else
